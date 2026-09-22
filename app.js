@@ -61,7 +61,7 @@ function renderCards() {
         const quantityControls = owned ? `<div class="quantity-stepper"><button type="button" data-quantity-action="decrease" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-label="Quitar una copia">−</button><strong aria-label="${owned.quantity} copias">×${owned.quantity}</strong><button type="button" data-quantity-action="increase" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-label="Añadir otra copia" ${Number(owned.quantity) >= 999 ? 'disabled' : ''}>+</button></div>` : '';
         return `<div class="variant-control"><button class="variant-toggle ${owned ? 'owned' : ''}" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-pressed="${Boolean(owned)}" ${variantMigrationReady ? '' : 'disabled'}><span class="check">${owned ? '✓' : ''}</span><span>${variant.label}</span></button>${quantityControls}</div>`;
       }).join('');
-      return `<article class="pokemon-card catalog-card ${ownedVariantCount ? 'owned-card' : ''}"><div class="card-art catalog-art"><img src="${c.image_small_url}" alt="${c.name}" loading="lazy" /></div><div class="card-info"><div class="card-name"><strong>${c.name}</strong><span>${c.card_number}/${setDefinition.cards}</span></div><p class="card-meta"><span>${c.set_name}</span><span>${c.rarity || 'Unknown'}</span></p><div class="variant-list">${variantButtons}</div></div></article>`;
+      return `<article class="pokemon-card catalog-card ${ownedVariantCount ? 'owned-card' : ''}"><div class="card-art catalog-art"><img src="${c.image_small_url}" alt="${c.name}" loading="lazy" /></div><div class="card-info"><div class="card-name"><strong>${c.name}</strong><span>${c.card_number}/${setDefinition.printedTotal || setDefinition.cards}</span></div><p class="card-meta"><span>${c.set_name}</span><span>${c.rarity || 'Unknown'}</span></p><div class="variant-list">${variantButtons}</div></div></article>`;
     }
     return `<article class="pokemon-card"><div class="card-art art-${c.art}">${c.icon}</div><div class="card-info"><div class="card-name"><strong>${c.name}</strong><span>${c.number}</span></div><p>${c.set}</p><div class="card-bottom"><span class="rarity">${c.rarity}</span><span class="quantity">×${c.quantity}</span></div></div></article>`;
   }).join('') || `<p>${remoteUser ? `No hemos podido cargar el catálogo de ${setDefinition.name}. Comprueba que su migración esté aplicada en Supabase.` : 'Inicia sesión para consultar y marcar tu colección.'}</p>`;
@@ -478,6 +478,7 @@ async function activateCloudSession() {
     setDefinitions = Object.fromEntries(sets.map(set => [set.id, {
       name: set.name,
       cards: set.printed_total,
+      printedTotal: set.printed_total,
       variants: 0,
       eraId: set.era_id,
       releaseDate: set.release_date,
@@ -496,6 +497,9 @@ async function activateCloudSession() {
   try {
     const catalogs = await Promise.all(Object.keys(setDefinitions).map(setCode => remote.loadCatalog(setCode)));
     allCatalogCards = catalogs.flat();
+    Object.entries(setDefinitions).forEach(([setCode, definition]) => {
+      definition.cards = allCatalogCards.filter(card => card.set_code === setCode).length;
+    });
     catalogCards = allCatalogCards.filter(card => card.set_code === activeSetCode);
   } catch (error) {
     catalogCards = [];

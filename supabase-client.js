@@ -81,18 +81,36 @@ window.pokeBinderRemote = (() => {
     },
     async loadCardVariants(cardIds) {
       if (!cardIds.length) return [];
-      const { data, error } = await client
-        .from('card_variants')
-        .select('card_id, variant_code, label, sort_order')
-        .in('card_id', cardIds)
-        .order('sort_order');
-      if (error) throw error;
-      return data;
+      // Cada lote queda por debajo del límite de filas de PostgREST al crecer el catálogo.
+      const batches = [];
+      for (let index = 0; index < cardIds.length; index += 100) {
+        batches.push(cardIds.slice(index, index + 100));
+      }
+      const results = await Promise.all(batches.map(async batch => {
+        const { data, error } = await client
+          .from('card_variants')
+          .select('card_id, variant_code, label, sort_order')
+          .in('card_id', batch)
+          .order('sort_order');
+        if (error) throw error;
+        return data;
+      }));
+      return results.flat();
     },
     async loadOwnedCards(userId) {
-      const { data, error } = await client.from('user_card_collection').select('card_id, variant_code, quantity, available_for_trade').eq('user_id', userId);
-      if (error) throw error;
-      return data;
+      const pageSize = 500;
+      const rows = [];
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await client.from('user_card_collection')
+          .select('card_id, variant_code, quantity, available_for_trade')
+          .eq('user_id', userId)
+          .order('card_id')
+          .order('variant_code')
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        rows.push(...data);
+        if (data.length < pageSize) return rows;
+      }
     },
     async loadOwnedCardsLegacy(userId) {
       const { data, error } = await client.from('user_card_collection').select('card_id, quantity, available_for_trade').eq('user_id', userId);
