@@ -1,23 +1,23 @@
 # PokéBinder
 
-Primera versión de una PWA privada para coleccionistas de Pokémon.
+Web instalable para llevar una colección privada de cartas Pokémon con amigos. El catálogo está en inglés y se organiza por eras y sets.
 
-## Probarla localmente
+La documentación de funcionamiento y mantenimiento está en **[docs/README.md](docs/README.md)**. Empieza por ahí antes de modificar el catálogo, Supabase o el despliegue.
 
-Abre `index.html` en un navegador. La colección y los álbumes se guardan solo en el almacenamiento local de ese navegador.
+## Desarrollo local
 
-Para probar el inicio de sesión de Supabase desde el mismo ordenador, inicia el servidor local con:
+Requiere Node.js. Desde la raíz del repositorio:
 
 ```powershell
-& 'C:\Users\Pc\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' dev-server.js
+npm start
 ```
 
-Y abre `http://localhost:8000`.
+Abre `http://localhost:8000`. Para comprobar el paquete que usa Cloudflare Pages:
 
-## Instalarla en iPhone
+```powershell
+npm run build
+```
 
-Cuando se publique con HTTPS, ábrela con Safari, pulsa **Compartir** y selecciona **Añadir a pantalla de inicio**. No necesita App Store ni cuota de Apple.
+El build genera `dist/` con los archivos públicos. La web publicada es [pokebinder-9eg.pages.dev](https://pokebinder-9eg.pages.dev/).
 
-## Para que sea compartida
-
-El siguiente paso requiere un proveedor de acceso por invitación y una base de datos común. La interfaz ya se mantendría; sustituiríamos `localStorage` por ese servicio y aplicaríamos reglas para que cada usuario solo pueda modificar su contenido.
+No abras `index.html` como archivo local: la autenticación y la instalación de la PWA necesitan un origen HTTP o HTTPS.

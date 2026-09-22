@@ -1,0 +1,54 @@
+# Importar un nuevo set
+
+El catálogo se amplía **desde Supabase**. Una publicación de Cloudflare por sí sola no inserta cartas. La web descubre automáticamente las nuevas filas de `card_sets`, `card_catalog` y `card_variants` al recargar tras iniciar sesión.
+
+## Antes de generar el SQL
+
+1. Elige el siguiente código de set (`xy6`, por ejemplo) y comprueba su orden dentro de la era en la [fuente del catálogo](https://github.com/PokemonTCG/pokemon-tcg-data/tree/master/cards/en). Verifica el nombre, fecha, total impreso, cartas secretas y posibles números alternativos con una checklist del set.
+2. Descarga `cards/en/<codigo>.json` como `supabase/<codigo>-source.json`. Los archivos `*-source.json` están excluidos de Git por `.gitignore`.
+3. Revisa rarezas y acabados. Las reglas actuales dan una variante base a todas las cartas y reverse a `Common`, `Uncommon`, `Rare` y `Rare Holo`. Comprueba si hay excepciones (energías, cartas promocionales, impresiones alternativas). No apliques esa regla a otra era sin comprobarla.
+
+## Generar el archivo
+
+Para los sets `xy4` y `xy5`, el generador está en `supabase/generate-next-xy-seeds.js`. Su lista `sets` contiene código, nombre, total impreso, número de secretas, fecha y orden. Para el siguiente set, añade una entrada y ajusta cualquier exclusión o regla especial después de contrastar la checklist. El script filtra números no enteros y valida que la secuencia de números sea completa, pero **esa exclusión debe revisarse para cada set**.
+
+Desde la raíz del proyecto:
+
+```powershell
+node supabase/generate-next-xy-seeds.js
+```
+
+El resultado `supabase/seed-<codigo>.sql` debe incluir, en este orden: fila de `card_sets`, cartas de `card_catalog`, variantes base y reverse. Los SQL de `xy4` y `xy5` se ejecutan dentro de una transacción y usan `on conflict ... do update`, así que volver a ejecutarlos no duplica esas filas. No borres cartas de un set ya utilizado: podrían estar referenciadas por colecciones de usuarios.
+
+## Comprobación antes de aplicar
+
+- Confirma que el número de filas de carta es `total impreso + secretas` y que los IDs y números no se repiten.
+- Confirma los números y nombres extremos, especialmente secretas y alternativas.
+- Cuenta las variantes previstas: una base por carta más una reverse para cada carta que la admite.
+- Comprueba que el SQL no toca `user_card_collection`, `profiles` ni `friendships`.
+- Ejecuta `node --check supabase/generate-next-xy-seeds.js` y `npm run build` si cambiaste también el frontend.
+
+## Aplicar en Supabase
+
+1. En el proyecto correcto, abre **SQL Editor → New query**.
+2. Pega **un** `seed-<codigo>.sql` completo y ejecútalo. Si hay dos sets, ejecuta dos consultas separadas, en orden de lanzamiento.
+3. Comprueba el resultado con esta consulta de solo lectura, cambiando el código:
+
+```sql
+select s.id, s.name, s.printed_total,
+       count(distinct c.id) as cartas_importadas,
+       count(v.variant_code) as variantes_importadas
+from public.card_sets s
+left join public.card_catalog c on c.set_code = s.id
+left join public.card_variants v on v.card_id = c.id
+where s.id = 'xy4'
+group by s.id, s.name, s.printed_total;
+```
+
+4. Recarga la web, entra en **Mi colección → era → set** y comprueba primera carta, última numerada, secretas, orden, imágenes, botones de variantes y ambas barras de progreso.
+5. Confirma también el perfil de un amigo: al pulsar el set debe mostrar las mismas cartas en modo lectura.
+6. Actualiza la tabla de [estado](estado.md): deja constancia de si el SQL solo está preparado, aplicado o comprobado en producción.
+
+## Casos actuales
+
+Los archivos [`seed-xy4.sql`](../supabase/seed-xy4.sql) y [`seed-xy5.sql`](../supabase/seed-xy5.sql) están en el repositorio. `xy4` omite dos impresiones alternativas con sufijo (`24a`, `65a`). Se esperan 122 cartas y 226 variantes para `xy4`, y 164 cartas y 296 variantes para `xy5`. Al redactar esta guía aún no hay confirmación de que ambos SQL se hayan ejecutado en Supabase.
