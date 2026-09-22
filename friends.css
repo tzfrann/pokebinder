@@ -258,6 +258,43 @@
   background: #fff;
 }
 
+.friend-set-progress {
+  width: 100%;
+  color: var(--ink);
+  font-family: 'DM Sans';
+  text-align: left;
+  cursor: pointer;
+}
+
+.friend-set-progress:hover {
+  border-color: #f6a4a9;
+  box-shadow: 0 8px 22px #24313f0d;
+}
+
+.friend-set-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.friend-set-title strong,
+.friend-set-title small {
+  display: block;
+}
+
+.friend-set-title small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.friend-set-title > span {
+  color: var(--red);
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .friend-set-progress > strong,
 .friend-progress-line span,
 .friend-progress-line small {
@@ -340,6 +377,156 @@
   display: block;
 }
 
+.friend-profile-back {
+  margin-bottom: 24px;
+}
+
+.friend-set-detail-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.friend-set-detail-heading h1,
+.friend-set-detail-heading p {
+  margin: 0;
+}
+
+.friend-set-detail-heading h1 {
+  font: 600 34px Fredoka;
+}
+
+.friend-set-detail-heading p:not(.eyebrow) {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.friend-set-legend {
+  display: flex;
+  gap: 13px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.friend-set-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.friend-set-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.friend-set-legend i.owned {
+  background: var(--green);
+}
+
+.friend-set-legend i.missing {
+  background: #cbd2d8;
+}
+
+.friend-set-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
+  gap: 15px;
+}
+
+.friend-set-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.friend-set-card.missing {
+  opacity: .58;
+}
+
+.friend-card-image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 198px;
+  padding: 13px;
+  background: #f4f6f8;
+}
+
+.friend-card-image img {
+  width: 100%;
+  height: 172px;
+  object-fit: contain;
+}
+
+.friend-card-image > span {
+  position: absolute;
+  right: 9px;
+  top: 9px;
+  padding: 5px 8px;
+  border-radius: 99px;
+  color: #fff;
+  background: #929ca5;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.friend-set-card.owned .friend-card-image > span {
+  background: var(--green);
+}
+
+.friend-set-card > div:last-child {
+  padding: 13px;
+}
+
+.friend-set-card strong,
+.friend-set-card small {
+  display: block;
+}
+
+.friend-set-card strong {
+  font: 600 15px Fredoka;
+}
+
+.friend-set-card small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.friend-card-variants {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.friend-variant-state {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+}
+
+.friend-variant-state i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #adb5bc;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.friend-variant-state.owned i {
+  background: var(--green);
+}
+
 .friend-shared-album small {
   margin-top: 5px;
   color: var(--muted);
@@ -393,5 +580,24 @@
 
   .friend-progress-grid {
     grid-template-columns: 1fr;
+  }
+
+  .friend-set-detail-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .friend-set-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .friend-card-image {
+    min-height: 150px;
+    padding: 8px;
+  }
+
+  .friend-card-image img {
+    height: 135px;
   }
 }
