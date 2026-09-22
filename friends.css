@@ -372,6 +372,93 @@
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
 }
 
+.friend-trade-count {
+  min-width: 32px;
+  padding: 6px 9px;
+  border-radius: 99px;
+  color: #247655;
+  background: #e7f7ef;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.friend-trade-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: 11px;
+}
+
+.friend-trade-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px;
+  overflow: hidden;
+  border: 1px solid #cfe9dc;
+  border-radius: 13px;
+  color: var(--ink);
+  background: linear-gradient(135deg, #fff, #f3fbf7);
+  font-family: 'DM Sans';
+  text-align: left;
+  cursor: pointer;
+}
+
+.friend-trade-card:hover {
+  border-color: var(--green);
+  box-shadow: 0 8px 22px #397d6017;
+  transform: translateY(-1px);
+}
+
+.friend-trade-card img {
+  flex: 0 0 auto;
+  width: 66px;
+  height: 91px;
+  object-fit: contain;
+}
+
+.friend-trade-card > div {
+  min-width: 0;
+}
+
+.friend-trade-card strong,
+.friend-trade-card small,
+.friend-trade-card span,
+.friend-trade-card b {
+  display: block;
+}
+
+.friend-trade-card strong {
+  font: 600 15px Fredoka;
+}
+
+.friend-trade-card small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-trade-card span {
+  width: fit-content;
+  margin-top: 7px;
+  padding: 3px 7px;
+  border-radius: 99px;
+  color: #247655;
+  background: #e2f5eb;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.friend-trade-card b {
+  margin-top: 6px;
+  color: #247655;
+  font-size: 9px;
+}
+
 .friend-shared-album strong,
 .friend-shared-album small {
   display: block;
@@ -527,6 +614,21 @@
   background: var(--green);
 }
 
+.friend-variant-state.trade-match {
+  flex-wrap: wrap;
+  padding: 6px;
+  border-radius: 7px;
+  color: #247655;
+  background: #e7f7ef;
+  font-weight: 700;
+}
+
+.friend-variant-state.trade-match b {
+  width: 100%;
+  padding-left: 19px;
+  font-size: 8px;
+}
+
 .friend-shared-album small {
   margin-top: 5px;
   color: var(--muted);
@@ -590,6 +692,10 @@
   .friend-set-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 9px;
+  }
+
+  .friend-trade-grid {
+    grid-template-columns: 1fr;
   }
 
   .friend-card-image {
