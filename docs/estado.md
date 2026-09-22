@@ -23,6 +23,8 @@ Fecha de revisión de esta guía: 22 de septiembre de 2026. Describe el código 
 | `xy3` | XY—Furious Fists | 113 | 210 | Importado y usado |
 | `xy4` | XY—Phantom Forces | 122 (119 + 3 secretas) | 226 | SQL preparado; falta confirmar ejecución en Supabase |
 | `xy5` | XY—Primal Clash | 164 (160 + 4 secretas) | 296 | SQL preparado; falta confirmar ejecución en Supabase |
+| `xy6` | XY—Roaring Skies | 110 (108 + 2 secretas) | 196 | SQL preparado; falta confirmar ejecución en Supabase |
+| `xy7` | XY—Ancient Origins | 100 (98 + 2 sobre el total impreso) | 172 | SQL preparado; falta confirmar ejecución en Supabase |
 
 Los sets visibles en la web salen de `card_sets`, no de esta tabla. Si no aparece un set, comprueba primero que se ejecutó su SQL en Supabase.
 

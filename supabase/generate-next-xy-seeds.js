@@ -1,18 +1,24 @@
-// Genera los SQL de XY—Phantom Forces y XY—Primal Clash desde los JSON de PokemonTCG.
-// Descarga xy4.json y xy5.json de PokemonTCG/pokemon-tcg-data/cards/en/ como
-// xy4-source.json y xy5-source.json en esta carpeta antes de ejecutarlo.
+// Genera seeds de la era XY desde los JSON de PokemonTCG/pokemon-tcg-data/cards/en/.
+// Guarda cada <set>.json como <set>-source.json en esta carpeta.
+// Acepta códigos concretos, por ejemplo: node supabase/generate-next-xy-seeds.js xy6 xy7
 const fs = require('fs');
 const path = require('path');
 
 const sets = [
   { id: 'xy4', name: 'Phantom Forces', total: 119, secretCount: 3, date: '2014-11-05', order: 4 },
-  { id: 'xy5', name: 'Primal Clash', total: 160, secretCount: 4, date: '2015-02-04', order: 5 }
+  { id: 'xy5', name: 'Primal Clash', total: 160, secretCount: 4, date: '2015-02-04', order: 5 },
+  { id: 'xy6', name: 'Roaring Skies', total: 108, secretCount: 2, date: '2015-05-06', order: 6 },
+  { id: 'xy7', name: 'Ancient Origins', total: 98, secretCount: 2, date: '2015-08-12', order: 7 }
 ];
 const reverseRarities = new Set(['Common', 'Uncommon', 'Rare', 'Rare Holo']);
 const holoRarities = new Set(['Rare Holo', 'Rare Holo EX', 'Rare Ultra', 'Rare Secret']);
 const quote = value => value == null ? 'null' : `'${String(value).replaceAll("'", "''")}'`;
 
-for (const set of sets) {
+const requested = process.argv.slice(2);
+if (requested.some(id => !sets.some(set => set.id === id))) {
+  throw new Error(`Set desconocido: ${requested.find(id => !sets.some(set => set.id === id))}`);
+}
+for (const set of sets.filter(set => !requested.length || requested.includes(set.id))) {
   const sourcePath = path.join(__dirname, `${set.id}-source.json`);
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
   const cards = source.filter(card => /^\d+$/.test(card.number));
