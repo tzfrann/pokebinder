@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="collection-library.css" />
     <link rel="stylesheet" href="quantity.css" />
     <link rel="stylesheet" href="hero-showcase.css" />
+    <link rel="stylesheet" href="friends.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -79,8 +80,10 @@
         </section>
 
         <section class="view" id="amigos">
-          <div class="page-heading"><div><p class="eyebrow">COMUNIDAD</p><h1>Amigos</h1><p>Comparte la aventura con tu círculo.</p></div><button class="primary-button">+ Invitar amigo</button></div>
-          <div class="friends-grid"><article class="invite-card"><span>＋</span><h3>Aún no tienes amigos</h3><p>Cuando conectemos las invitaciones, aparecerán aquí.</p></article></div>
+          <div class="page-heading"><div><p class="eyebrow">COMUNIDAD</p><h1>Amigos</h1><p>Comparte la aventura con tu círculo.</p></div></div>
+          <section class="friend-search-panel"><div><h2>Encuentra a un entrenador</h2><p>Busca por el nombre visible de su perfil.</p></div><label class="friend-search"><span>⌕</span><input id="friend-search-input" placeholder="Buscar entrenador..." autocomplete="off" /><button id="friend-search-button" type="button">Buscar</button></label><div id="friend-search-results"></div></section>
+          <section class="friend-section" id="friend-requests-section"><div class="section-heading"><div><h2>Solicitudes</h2><p>Peticiones recibidas y enviadas.</p></div></div><div id="friend-requests"></div></section>
+          <section class="friend-section"><div class="section-heading"><div><h2>Mis amigos</h2><p>Entrenadores conectados contigo.</p></div></div><div class="friends-grid" id="friends-list"></div></section>
         </section>
 
         <section class="view" id="trades">

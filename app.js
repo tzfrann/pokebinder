@@ -12,6 +12,7 @@ let variantMigrationReady = true;
 let activeSetCode = 'xy1';
 let setDefinitions = {};
 let catalogEras = [];
+let friendships = [];
 let featuredCardIds = JSON.parse(localStorage.getItem('pokebinder-featured-cards') || '[]').slice(0, 3);
 function applyIdentity(name = null) {
   const displayName = name || 'Sin sesión';
@@ -151,10 +152,59 @@ function renderSetLibrary() {
 function renderAlbums() {
   el('album-grid').innerHTML = albums.map(a => `<article class="album-card"><div class="album-cover ${a.style}"><b>${a.name}</b><span>${a.cards} cartas</span></div><div class="album-body"><h3>${a.name}</h3><p>${a.description || 'Un álbum de tu colección.'}</p><div class="album-footer"><span>${a.visibility === 'Solo yo' ? '◉ Privado' : '♧ Amigos'}</span><button class="text-button">Ver álbum →</button></div></div></article>`).join('') || '<div class="clean-empty"><span>▤</span><h3>No tienes álbumes todavía</h3><p>Crea el primero cuando quieras organizar una selección de cartas.</p></div>';
 }
+const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+const profileAvatar = profile => {
+  const color = /^#[0-9a-f]{6}$/i.test(profile?.avatar_color || '') ? profile.avatar_color : '#ffd255';
+  return `<div class="avatar" style="background:${color}">${escapeHTML(profile?.display_name?.trim().charAt(0).toUpperCase() || '?')}</div>`;
+};
+function friendshipForUser(userId) {
+  return friendships.find(friendship => friendship.requester_id === userId || friendship.addressee_id === userId);
+}
+function renderFriendships() {
+  if (!remoteUser) {
+    el('friend-requests').innerHTML = '<div class="friends-empty">Inicia sesión para gestionar solicitudes.</div>';
+    el('friends-list').innerHTML = '<div class="friends-empty">Tus amigos aparecerán aquí.</div>';
+    return;
+  }
+  const pending = friendships.filter(friendship => friendship.status === 'pending');
+  el('friend-requests-section').hidden = !pending.length;
+  el('friend-requests').innerHTML = pending.map(friendship => {
+    const incoming = friendship.addressee_id === remoteUser.id;
+    const profile = incoming ? friendship.requester : friendship.addressee;
+    return `<article class="friend-row">${profileAvatar(profile)}<div class="friend-row-info"><strong>${escapeHTML(profile.display_name)}</strong><small>${incoming ? 'Quiere añadirte como amigo' : 'Solicitud enviada'}</small></div><div class="friend-row-actions">${incoming ? `<button class="friend-action" data-friend-action="accept" data-friendship-id="${friendship.id}">Aceptar</button><button class="friend-action secondary" data-friend-action="delete" data-friendship-id="${friendship.id}">Rechazar</button>` : `<button class="friend-action secondary" data-friend-action="delete" data-friendship-id="${friendship.id}">Cancelar</button>`}</div></article>`;
+  }).join('');
+  const accepted = friendships.filter(friendship => friendship.status === 'accepted');
+  el('friends-list').innerHTML = accepted.map(friendship => {
+    const profile = friendship.requester_id === remoteUser.id ? friendship.addressee : friendship.requester;
+    return `<article class="friend-card">${profileAvatar(profile)}<h3>${escapeHTML(profile.display_name)}</h3><p>Ya podéis compartir vuestra colección.</p><span class="friend-state">Amigos</span></article>`;
+  }).join('') || '<div class="friends-empty"><span>♧</span><p>Aún no tienes amigos. Busca un entrenador por su nombre.</p></div>';
+}
+async function loadFriends() {
+  if (!remoteUser) { friendships = []; renderFriendships(); return; }
+  friendships = await remote.loadFriendships(remoteUser.id);
+  renderFriendships();
+}
+async function searchFriends() {
+  if (!remoteUser) { el('auth-modal').showModal(); return; }
+  const query = el('friend-search-input').value.trim();
+  if (query.length < 2) { el('friend-search-results').innerHTML = '<div class="friends-empty">Escribe al menos dos caracteres.</div>'; return; }
+  el('friend-search-results').innerHTML = '<div class="friends-empty">Buscando…</div>';
+  try {
+    const profiles = await remote.searchProfiles(query, remoteUser.id);
+    el('friend-search-results').innerHTML = profiles.map(profile => {
+      const existing = friendshipForUser(profile.id);
+      const label = existing?.status === 'accepted' ? 'Ya sois amigos' : existing ? 'Solicitud pendiente' : 'Añadir';
+      return `<article class="friend-row">${profileAvatar(profile)}<div class="friend-row-info"><strong>${escapeHTML(profile.display_name)}</strong><small>Entrenador PokéBinder</small></div><button class="friend-action" data-add-friend="${profile.id}" ${existing ? 'disabled' : ''}>${label}</button></article>`;
+    }).join('') || '<div class="friends-empty">No hemos encontrado ningún entrenador con ese nombre.</div>';
+  } catch (error) {
+    el('friend-search-results').innerHTML = `<div class="friends-empty">No se pudo buscar: ${escapeHTML(error.message)}</div>`;
+  }
+}
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.view === id));
   if (id === 'coleccion') showCollectionIndex();
+  if (id === 'amigos' && remoteUser) loadFriends().catch(error => showToast(`No se pudieron cargar los amigos: ${error.message}`, true));
   document.querySelector('.sidebar').classList.remove('open'); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function showCollectionIndex() {
@@ -197,6 +247,28 @@ el('save-featured-cards').addEventListener('click', async () => {
     showToast('Guardado en este dispositivo. Falta aplicar la migración del escaparate en Supabase.', true);
   }
   el('featured-modal').close();
+});
+el('friend-search-button').addEventListener('click', searchFriends);
+el('friend-search-input').addEventListener('keydown', event => { if (event.key === 'Enter') searchFriends(); });
+el('friend-search-results').addEventListener('click', async event => {
+  const button = event.target.closest('[data-add-friend]');
+  if (!button || button.disabled) return;
+  button.disabled = true;
+  const { error } = await remote.sendFriendRequest(remoteUser.id, button.dataset.addFriend);
+  if (error) { showToast(`No se pudo enviar la solicitud: ${error.message}`, true); button.disabled = false; return; }
+  showToast('Solicitud de amistad enviada.');
+  await loadFriends();
+  await searchFriends();
+});
+el('friend-requests').addEventListener('click', async event => {
+  const button = event.target.closest('[data-friend-action]');
+  if (!button || button.disabled) return;
+  button.disabled = true;
+  const action = button.dataset.friendAction;
+  const result = action === 'accept' ? await remote.acceptFriendRequest(button.dataset.friendshipId) : await remote.deleteFriendship(button.dataset.friendshipId);
+  if (result.error) { showToast(`No se pudo actualizar la solicitud: ${result.error.message}`, true); button.disabled = false; return; }
+  showToast(action === 'accept' ? 'Ya sois amigos.' : 'Solicitud eliminada.');
+  await loadFriends();
 });
 el('open-card-modal')?.addEventListener('click', () => el('card-modal').showModal());
 el('open-album-modal').addEventListener('click', () => el('album-modal').showModal());
@@ -266,7 +338,7 @@ document.addEventListener('click', event => {
   const dialog = closeButton.closest('dialog');
   if (dialog?.open) dialog.close();
 });
-renderCards(); renderAlbums();
+renderCards(); renderAlbums(); renderFriendships();
 
 async function syncToCloud() {
   if (!remote || !remoteUser) return;
@@ -360,12 +432,15 @@ async function activateCloudSession() {
     albums = cloudAlbums.filter(album => !demoAlbumNames.has(album.title)).map(album => ({ name: album.title, description: album.description, visibility: album.visibility === 'private' ? 'Solo yo' : 'Amigos', cards: 0, style: album.cover_style === 'teal' ? 'alt' : album.cover_style === 'gold' ? 'gold' : '' }));
   } catch (error) { showToast(`No se pudieron cargar los álbumes: ${error.message}`, true); }
 
+  try { await loadFriends(); }
+  catch (error) { friendships = []; renderFriendships(); showToast(`No se pudieron cargar los amigos: ${error.message}`, true); }
+
   renderCards(); renderAlbums();
   if (!remoteUser.user_metadata?.pokebinder_setup_complete) el('password-modal').showModal();
 }
 
 el('auth-button').addEventListener('click', async () => {
-  if (remoteUser) { await remote.signOut(); remoteUser = null; catalogCards = []; allCatalogCards = []; catalogEras = []; setDefinitions = {}; variantsByCard = new Map(); ownedCards = new Map(); applyIdentity(); el('available-sets-count').textContent = '0'; el('available-sets-label').textContent = 'Sets disponibles'; renderCards(); el('auth-button').textContent = 'Entrar'; return; }
+  if (remoteUser) { await remote.signOut(); remoteUser = null; catalogCards = []; allCatalogCards = []; catalogEras = []; setDefinitions = {}; variantsByCard = new Map(); ownedCards = new Map(); friendships = []; applyIdentity(); el('available-sets-count').textContent = '0'; el('available-sets-label').textContent = 'Sets disponibles'; renderCards(); renderFriendships(); el('auth-button').textContent = 'Entrar'; return; }
   el('auth-modal').showModal();
 });
 el('close-auth').addEventListener('click', () => el('auth-modal').close());

@@ -34,6 +34,25 @@ window.pokeBinderRemote = (() => {
     async saveFeaturedCards(userId, cardIds) {
       return client.from('profiles').update({ featured_card_ids: cardIds }).eq('id', userId);
     },
+    async searchProfiles(query, currentUserId) {
+      const { data, error } = await client.from('profiles').select('id, display_name, avatar_color').ilike('display_name', `%${query}%`).neq('id', currentUserId).order('display_name').limit(12);
+      if (error) throw error;
+      return data;
+    },
+    async loadFriendships(userId) {
+      const { data, error } = await client.from('friendships').select('id, requester_id, addressee_id, status, created_at, requester:profiles!friendships_requester_id_fkey(id, display_name, avatar_color), addressee:profiles!friendships_addressee_id_fkey(id, display_name, avatar_color)').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    async sendFriendRequest(requesterId, addresseeId) {
+      return client.from('friendships').insert({ requester_id: requesterId, addressee_id: addresseeId });
+    },
+    async acceptFriendRequest(friendshipId) {
+      return client.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
+    },
+    async deleteFriendship(friendshipId) {
+      return client.from('friendships').delete().eq('id', friendshipId);
+    },
     async signOut() { return client.auth.signOut(); },
     async loadCards(userId) {
       const { data, error } = await client.from('cards').select('*').eq('user_id', userId).order('created_at', { ascending: false });

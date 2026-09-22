@@ -1,0 +1,158 @@
+.friend-search-panel {
+  padding: 23px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fff;
+}
+
+.friend-search-panel h2,
+.friend-search-panel p {
+  margin: 0;
+}
+
+.friend-search-panel h2,
+.friend-section h2 {
+  font: 600 20px Fredoka;
+}
+
+.friend-search-panel p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.friend-search {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+  margin-top: 17px;
+  padding: 6px 6px 6px 13px;
+  border: 1px solid #dfe4e8;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.friend-search > span {
+  color: #89939c;
+  font-size: 19px;
+}
+
+.friend-search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: 14px 'DM Sans';
+}
+
+.friend-search button,
+.friend-action {
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--red);
+  font: 700 12px 'DM Sans';
+  cursor: pointer;
+}
+
+#friend-search-results,
+#friend-requests {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.friend-section {
+  margin-top: 30px;
+}
+
+.friend-section .section-heading {
+  margin: 0 0 15px;
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.friend-row .avatar {
+  flex: 0 0 auto;
+}
+
+.friend-row-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.friend-row-info strong,
+.friend-row-info small {
+  display: block;
+}
+
+.friend-row-info small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.friend-row-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.friend-action.secondary {
+  border: 1px solid #dfe4e8;
+  color: #68747f;
+  background: #fff;
+}
+
+.friend-action:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.friend-card {
+  position: relative;
+}
+
+.friend-card .friend-state {
+  display: inline-block;
+  margin-top: 13px;
+  padding: 5px 9px;
+  border-radius: 99px;
+  color: #368567;
+  background: #eaf8f1;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.friends-empty {
+  grid-column: 1 / -1;
+  padding: 34px;
+  border: 1px dashed #d9e0e5;
+  border-radius: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .friend-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .friend-row-actions {
+    width: 100%;
+  }
+
+  .friend-row-actions .friend-action {
+    flex: 1;
+  }
+}
