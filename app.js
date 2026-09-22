@@ -74,6 +74,7 @@ function renderCards() {
   const availableVariants = catalogCards.reduce((sum, card) => sum + (variantsByCard.get(card.id)?.length || 0), 0);
   el('collection-count').textContent = ownedVariantTotal; el('duplicates-count').textContent = duplicates;
   el('base-owned-count').textContent = ownedBaseTotal;
+  el('base-total').textContent = catalogCards.length;
   const allOwnedValues = [...ownedCards.values()];
   const allUniqueTotal = new Set(allOwnedValues.map(card => card.card_id)).size;
   const allCopiesTotal = allOwnedValues.reduce((sum, card) => sum + Number(card.quantity), 0);
@@ -519,7 +520,7 @@ async function activateCloudSession() {
     });
   } catch (error) {
     variantMigrationReady = false;
-    variantsByCard = new Map(allCatalogCards.map(card => [card.id, [{ card_id: card.id, variant_code: 'standard', label: card.rarity?.startsWith('Rare Holo') || ['Rare Ultra', 'Rare Secret'].includes(card.rarity) ? 'Holo' : 'Standard', sort_order: 1 }]]));
+    variantsByCard = new Map(allCatalogCards.map(card => [card.id, [{ card_id: card.id, variant_code: 'standard', label: card.rarity === 'Rare BREAK' ? 'BREAK' : card.rarity?.startsWith('Rare Holo') || ['Rare Ultra', 'Rare Secret'].includes(card.rarity) ? 'Holo' : 'Standard', sort_order: 1 }]]));
     showToast('Sesión activa. Falta aplicar la migración de variantes en Supabase.', true);
   }
 

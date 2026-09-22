@@ -8,7 +8,9 @@ const sets = [
   { id: 'xy4', name: 'Phantom Forces', total: 119, secretCount: 3, date: '2014-11-05', order: 4 },
   { id: 'xy5', name: 'Primal Clash', total: 160, secretCount: 4, date: '2015-02-04', order: 5 },
   { id: 'xy6', name: 'Roaring Skies', total: 108, secretCount: 2, date: '2015-05-06', order: 6 },
-  { id: 'xy7', name: 'Ancient Origins', total: 98, secretCount: 2, date: '2015-08-12', order: 7 }
+  { id: 'xy7', name: 'Ancient Origins', total: 98, secretCount: 2, date: '2015-08-12', order: 7 },
+  { id: 'xy8', name: 'BREAKthrough', total: 162, secretCount: 2, date: '2015-11-04', order: 8 },
+  { id: 'xy9', name: 'BREAKpoint', total: 122, secretCount: 1, date: '2016-02-03', order: 9 }
 ];
 const reverseRarities = new Set(['Common', 'Uncommon', 'Rare', 'Rare Holo']);
 const holoRarities = new Set(['Rare Holo', 'Rare Holo EX', 'Rare Ultra', 'Rare Secret']);
@@ -47,7 +49,7 @@ for (const set of sets.filter(set => !requested.length || requested.includes(set
     rows +
     `\non conflict (id) do update set name = excluded.name, set_code = excluded.set_code, set_name = excluded.set_name, card_number = excluded.card_number, rarity = excluded.rarity, image_small_url = excluded.image_small_url, image_large_url = excluded.image_large_url, release_date = excluded.release_date;\n\n` +
     `insert into public.card_variants (card_id, variant_code, label, sort_order)\n` +
-    `select id, 'standard', case when rarity in (${[...holoRarities].map(quote).join(', ')}) then 'Holo' else 'Standard' end, 1\n` +
+    `select id, 'standard', case when rarity = 'Rare BREAK' then 'BREAK' when rarity in (${[...holoRarities].map(quote).join(', ')}) then 'Holo' else 'Standard' end, 1\n` +
     `from public.card_catalog where set_code = ${quote(set.id)}\n` +
     `on conflict (card_id, variant_code) do update set label = excluded.label, sort_order = excluded.sort_order;\n\n` +
     `insert into public.card_variants (card_id, variant_code, label, sort_order)\n` +

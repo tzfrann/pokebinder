@@ -10,12 +10,12 @@ El catálogo se amplía **desde Supabase**. Una publicación de Cloudflare por s
 
 ## Generar el archivo
 
-Para los sets `xy4` a `xy7`, el generador está en `supabase/generate-next-xy-seeds.js`. Su lista `sets` contiene código, nombre, total impreso, número de cartas por encima de ese total, fecha y orden. Para el siguiente set, añade una entrada y ajusta cualquier exclusión o regla especial después de contrastar la checklist. **No confundas la cantidad de cartas con rareza `Rare Secret` con el número de cartas por encima del total impreso**: en `xy7` hay cinco con esa rareza, pero solo dos números por encima de 98. El script filtra números no enteros y valida que la secuencia de números sea completa, pero **esa exclusión debe revisarse para cada set**.
+Para los sets `xy4` a `xy9`, el generador está en `supabase/generate-next-xy-seeds.js`. Su lista `sets` contiene código, nombre, total impreso, número de cartas por encima de ese total, fecha y orden. Para el siguiente set, añade una entrada y ajusta cualquier exclusión o regla especial después de contrastar la checklist. **No confundas la cantidad de cartas con rareza `Rare Secret` con el número de cartas por encima del total impreso**: en `xy7` hay cinco con esa rareza, pero solo dos números por encima de 98. En `xy8` y `xy9` aparece `Rare BREAK`: su impresión base se etiqueta `BREAK` y no tiene reverse. El script filtra números no enteros y valida que la secuencia de números sea completa, pero **esa exclusión debe revisarse para cada set**.
 
 Desde la raíz del proyecto:
 
 ```powershell
-node supabase/generate-next-xy-seeds.js xy6 xy7
+node supabase/generate-next-xy-seeds.js xy8 xy9
 ```
 
 Pasa como argumentos solo los códigos que quieres generar. Sin argumentos, el script intenta generar todos los sets de su lista y necesita todos sus archivos fuente locales. El resultado `supabase/seed-<codigo>.sql` incluye, en este orden: fila de `card_sets`, cartas de `card_catalog`, variantes base y reverse. Los SQL generados se ejecutan dentro de una transacción y usan `on conflict ... do update`, así que volver a ejecutarlos no duplica esas filas. No borres cartas de un set ya utilizado: podrían estar referenciadas por colecciones de usuarios.
@@ -51,4 +51,4 @@ group by s.id, s.name, s.printed_total;
 
 ## Casos actuales
 
-Los archivos [`seed-xy4.sql`](../supabase/seed-xy4.sql), [`seed-xy5.sql`](../supabase/seed-xy5.sql), [`seed-xy6.sql`](../supabase/seed-xy6.sql) y [`seed-xy7.sql`](../supabase/seed-xy7.sql) están en el repositorio. `xy4` omite `24a` y `65a`; `xy6` omite `77a` y `92a`; `xy7` omite `75a`. Se esperan 122/226 cartas/variantes para `xy4`, 164/296 para `xy5`, 110/196 para `xy6` y 100/172 para `xy7`. Al redactar esta guía aún no hay confirmación de que los SQL `xy4` a `xy7` se hayan ejecutado en Supabase.
+Los seeds disponibles van de [`xy4`](../supabase/seed-xy4.sql) a [`xy9`](../supabase/seed-xy9.sql). `xy4` omite `24a` y `65a`; `xy6` omite `77a` y `92a`; `xy7` omite `75a`; `xy8` omite `146a`; `xy9` omite `98a`, `98b` y `107a`. Para `xy8` se esperan 164 cartas y 302 variantes; para `xy9`, 123 cartas y 220 variantes. Al redactar esta guía aún no hay confirmación de que todos los SQL `xy4` a `xy9` se hayan ejecutado en Supabase.

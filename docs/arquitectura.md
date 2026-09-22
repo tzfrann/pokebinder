@@ -13,7 +13,7 @@ El orden de carga al iniciar sesión en `activateCloudSession()` es: perfil y es
 | `profiles` | Nombre, color de avatar y hasta tres IDs de cartas destacadas. El perfil se crea con un trigger de `auth.users`. |
 | `card_eras` → `card_sets` | Jerarquía y orden de sets. `printed_total` es el denominador impreso en la carta. |
 | `card_catalog` | Una fila por impresión numerada; ID como `xy4-1`, nombre, rareza, número, URLs de imagen. |
-| `card_variants` | Acabados por carta. Clave `(card_id, variant_code)`; hoy se usan `standard` y `reverse_holo`. |
+| `card_variants` | Acabados por carta. Clave `(card_id, variant_code)`; hoy se usan `standard` y `reverse_holo`. Las cartas de rareza `Rare BREAK` llevan la etiqueta base `BREAK` y no reciben reverse. |
 | `user_card_collection` | Clave `(user_id, card_id, variant_code)` y cantidad. La ausencia de una fila significa que no se posee esa variante. |
 | `friendships` | Solicitudes pendientes o aceptadas. Un índice impide duplicados en ambas direcciones. |
 | `albums`, `album_cards` | Cabeceras de álbum y tabla preparada para sus cartas; esta última no está conectada a la interfaz. |

@@ -20,7 +20,7 @@ Los SQL del repositorio **no se ejecutan con el despliegue**. Cada migración o 
 
 ### Si hay que reconstruir el proyecto desde cero
 
-En un **proyecto Supabase nuevo y vacío**, el orden de referencia es `schema.sql` → `catalog-migration.sql` → `era-migration.sql` → `seed-xy1.sql` → `variant-migration.sql` → `featured-cards-migration.sql` → `friendships-migration.sql` → `seed-xy2.sql` → `seed-xy3.sql` → `seed-xy4.sql` → `seed-xy5.sql` → `seed-xy6.sql` → `seed-xy7.sql`. `dynamic-catalog-migration.sql` normaliza los nombres de `xy1` y `xy2`; puede aplicarse tras esos seeds. Este orden documenta los archivos existentes; prueba cada paso y no lo repitas sobre la base de datos actual. Después configura `supabase/config.js` con la URL y la clave publishable del nuevo proyecto, y las URLs de redirección de Auth.
+En un **proyecto Supabase nuevo y vacío**, el orden de referencia es `schema.sql` → `catalog-migration.sql` → `era-migration.sql` → `seed-xy1.sql` → `variant-migration.sql` → `featured-cards-migration.sql` → `friendships-migration.sql` → los seeds `xy2` a `xy9` en orden. `dynamic-catalog-migration.sql` normaliza los nombres de `xy1` y `xy2`; puede aplicarse tras esos seeds. Este orden documenta los archivos existentes; prueba cada paso y no lo repitas sobre la base de datos actual. Después configura `supabase/config.js` con la URL y la clave publishable del nuevo proyecto, y las URLs de redirección de Auth.
 
 ## Invitar a un amigo
 

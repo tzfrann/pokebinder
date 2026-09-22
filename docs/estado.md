@@ -25,6 +25,8 @@ Fecha de revisión de esta guía: 22 de septiembre de 2026. Describe el código 
 | `xy5` | XY—Primal Clash | 164 (160 + 4 secretas) | 296 | SQL preparado; falta confirmar ejecución en Supabase |
 | `xy6` | XY—Roaring Skies | 110 (108 + 2 secretas) | 196 | SQL preparado; falta confirmar ejecución en Supabase |
 | `xy7` | XY—Ancient Origins | 100 (98 + 2 sobre el total impreso) | 172 | SQL preparado; falta confirmar ejecución en Supabase |
+| `xy8` | XY—BREAKthrough | 164 (162 + 2 secretas) | 302 | SQL preparado; falta confirmar ejecución en Supabase |
+| `xy9` | XY—BREAKpoint | 123 (122 + 1 secreta) | 220 | SQL preparado; falta confirmar ejecución en Supabase |
 
 Los sets visibles en la web salen de `card_sets`, no de esta tabla. Si no aparece un set, comprueba primero que se ejecutó su SQL en Supabase.
 
