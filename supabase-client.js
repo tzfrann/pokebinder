@@ -6,8 +6,9 @@ window.pokeBinderRemote = (() => {
   return {
     client,
     async currentUser() {
-      const { data: { session } } = await client.auth.getSession();
-      if (session?.user) return session.user;
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) return null;
       const { data: { user }, error } = await client.auth.getUser();
       if (error) throw error;
       return user;

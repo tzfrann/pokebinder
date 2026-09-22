@@ -26,6 +26,8 @@ En un **proyecto Supabase nuevo y vacío**, el orden de referencia es `schema.sq
 
 En Supabase **Authentication → Users → Invite user**, envía la invitación al correo del amigo. La app usa el proveedor Email y la intención es mantener desactivado el registro público en **Authentication → Providers → Email**. El trigger `on_auth_user_created` crea su fila de `profiles`. Tras completar su acceso, puede fijar contraseña y nombre visible. Comprueba que las URLs de redirección de Auth incluyan el dominio publicado, no solo `localhost`.
 
+Si alguien abre la web sin sesión, debe ver el botón **Entrar**; no es un error. Si la invitación no inicia sesión, comprueba que abrió el enlace completo en el mismo navegador donde usará la web, que este redirige a `https://pokebinder-9eg.pages.dev/` y que no ha caducado. La caducidad de invitaciones depende de **Authentication → Providers → Email → Email OTP Expiration**; Supabase documenta una hora como valor predeterminado. Si caducó, envía una invitación nueva desde Supabase. No pidas a nadie que comparta el enlace completo: contiene credenciales de acceso de un solo uso.
+
 Una cuenta nueva todavía no es amiga de nadie. Dentro de la web, buscad el nombre visible, enviad la solicitud y aceptadla. Solo entonces las políticas permiten leer la colección y los álbumes compartidos del otro.
 
 ## Dónde mirar cuando algo falla
@@ -37,6 +39,7 @@ Una cuenta nueva todavía no es amiga de nadie. Dentro de la web, buscad el nomb
 | Se ven cartas, pero faltan variantes o progreso | Consulta `card_variants` y confirma que el seed llegó hasta el final. |
 | Las imágenes no cargan | Abre una URL `image_small_url` del catálogo; se alojan fuera de Cloudflare. |
 | Un amigo no ve la colección | Confirma que `friendships.status = 'accepted'` y que ambos han iniciado sesión. |
+| Aparece «Auth session missing» | Comprueba si hay sesión real. Sin sesión, la web debe ofrecer **Entrar**; si venía de una invitación, revisa caducidad y URL de redirección. |
 | Un álbum privado aparece para otra persona | Revisa las políticas RLS de `albums` antes de seguir publicando cambios. |
 | Sigue viéndose una versión vieja | Comprueba el nombre `CACHE` del service worker publicado y recarga dos veces. |
 

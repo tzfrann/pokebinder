@@ -546,8 +546,23 @@ async function activateCloudSession() {
   if (!remoteUser.user_metadata?.pokebinder_setup_complete) el('password-modal').showModal();
 }
 
+function clearCloudSession() {
+  clearTimeout(remoteTimer);
+  remoteUser = null;
+  catalogCards = []; allCatalogCards = []; catalogEras = []; setDefinitions = {};
+  variantsByCard = new Map(); ownedCards = new Map(); friendships = []; activeFriendProfile = null;
+  albums = []; featuredCardIds = [];
+  applyIdentity();
+  el('available-sets-count').textContent = '0';
+  el('available-sets-label').textContent = 'Sets disponibles';
+  el('auth-button').textContent = 'Entrar';
+  if (el('password-modal').open) el('password-modal').close();
+  showFriendsOverview();
+  renderCards(); renderAlbums(); renderFriendships();
+}
+const sessionMissing = error => error?.name === 'AuthSessionMissingError' || /auth session missing/i.test(error?.message || '');
 el('auth-button').addEventListener('click', async () => {
-  if (remoteUser) { await remote.signOut(); remoteUser = null; catalogCards = []; allCatalogCards = []; catalogEras = []; setDefinitions = {}; variantsByCard = new Map(); ownedCards = new Map(); friendships = []; applyIdentity(); el('available-sets-count').textContent = '0'; el('available-sets-label').textContent = 'Sets disponibles'; renderCards(); renderFriendships(); el('auth-button').textContent = 'Entrar'; return; }
+  if (remoteUser) { await remote.signOut(); clearCloudSession(); return; }
   el('auth-modal').showModal();
 });
 el('close-auth').addEventListener('click', () => el('auth-modal').close());
@@ -556,7 +571,7 @@ el('auth-form').addEventListener('submit', async (event) => {
   if (!remote) return;
   const message = el('auth-message'); message.textContent = 'Entrando…';
   const { error } = await remote.signIn(el('auth-email').value, el('auth-password').value);
-  if (error) { message.textContent = 'No hemos podido entrar: ' + error.message; return; }
+  if (error) { message.textContent = sessionMissing(error) ? 'No hay una sesión de invitación activa. Abre de nuevo el enlace de invitación en este navegador; si ha caducado, pide una invitación nueva.' : 'No hemos podido entrar: ' + error.message; return; }
   el('auth-modal').close(); await activateCloudSession();
 });
 el('password-form').addEventListener('submit', async (event) => {
@@ -567,7 +582,16 @@ el('password-form').addEventListener('submit', async (event) => {
   if (password !== el('repeat-password').value) { message.textContent = 'Las contraseñas no coinciden.'; return; }
   message.textContent = 'Guardando…';
   const { error } = await remote.setPassword(password);
-  if (error) { message.textContent = 'No hemos podido guardar la contraseña: ' + error.message; return; }
+  if (error) {
+    if (sessionMissing(error)) {
+      clearCloudSession();
+      el('auth-message').textContent = 'La sesión de la invitación ha caducado o se abrió en otro navegador. Abre de nuevo el enlace; si ya no funciona, pide una invitación nueva.';
+      el('auth-modal').showModal();
+    } else {
+      message.textContent = 'No hemos podido guardar la contraseña: ' + error.message;
+    }
+    return;
+  }
   const { error: profileError } = await remote.updateProfile(remoteUser.id, displayName);
   if (profileError) { message.textContent = 'La contraseña se guardó, pero el nombre no: ' + profileError.message; return; }
   el('password-modal').close();
