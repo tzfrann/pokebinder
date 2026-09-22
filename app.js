@@ -176,7 +176,7 @@ function renderFriendships() {
   const accepted = friendships.filter(friendship => friendship.status === 'accepted');
   el('friends-list').innerHTML = accepted.map(friendship => {
     const profile = friendship.requester_id === remoteUser.id ? friendship.addressee : friendship.requester;
-    return `<article class="friend-card">${profileAvatar(profile)}<h3>${escapeHTML(profile.display_name)}</h3><p>Ya podéis compartir vuestra colección.</p><span class="friend-state">Amigos</span></article>`;
+    return `<article class="friend-card">${profileAvatar(profile)}<h3>${escapeHTML(profile.display_name)}</h3><p>Ya podéis compartir vuestra colección.</p><span class="friend-state">Amigos</span><button class="friend-profile-button" data-view-friend="${profile.id}">Ver perfil →</button></article>`;
   }).join('') || '<div class="friends-empty"><span>♧</span><p>Aún no tienes amigos. Busca un entrenador por su nombre.</p></div>';
 }
 async function loadFriends() {
@@ -200,11 +200,65 @@ async function searchFriends() {
     el('friend-search-results').innerHTML = `<div class="friends-empty">No se pudo buscar: ${escapeHTML(error.message)}</div>`;
   }
 }
+function showFriendsOverview() {
+  el('friends-overview').hidden = false;
+  el('friend-profile').hidden = true;
+}
+async function openFriendProfile(userId) {
+  el('friends-overview').hidden = true;
+  el('friend-profile').hidden = false;
+  el('friend-profile-content').innerHTML = '<div class="friends-empty">Cargando perfil…</div>';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  try {
+    const [profile, collection, sharedAlbums] = await Promise.all([
+      remote.loadPublicProfile(userId),
+      remote.loadOwnedCards(userId),
+      remote.loadAlbums(userId)
+    ]);
+    const ownedCardIds = new Set(collection.map(item => item.card_id));
+    const featured = (profile.featured_card_ids || []).map(id => allCatalogCards.find(card => card.id === id)).filter(card => card && ownedCardIds.has(card.id));
+    const featuredMarkup = Array.from({ length: 3 }, (_, index) => {
+      const card = featured[index];
+      return card ? `<figure class="friend-featured-card"><img src="${card.image_large_url || card.image_small_url}" alt="${escapeHTML(card.name)}" loading="lazy" /></figure>` : '<div class="friend-featured-empty">＋</div>';
+    }).join('');
+    const groupedCollection = new Map();
+    collection.forEach(item => {
+      if (!groupedCollection.has(item.card_id)) groupedCollection.set(item.card_id, []);
+      groupedCollection.get(item.card_id).push(item);
+    });
+    const collectionMarkup = allCatalogCards.filter(card => groupedCollection.has(card.id)).map(card => {
+      const ownedVariants = groupedCollection.get(card.id);
+      const variantMarkup = ownedVariants.map(item => {
+        const variant = variantsByCard.get(card.id)?.find(entry => entry.variant_code === item.variant_code);
+        return `<span>${escapeHTML(variant?.label || item.variant_code)} <b>×${item.quantity}</b></span>`;
+      }).join('');
+      return `<article class="friend-owned-card"><img src="${card.image_small_url}" alt="${escapeHTML(card.name)}" loading="lazy" /><div><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · ${card.card_number}</small><div class="friend-owned-variants">${variantMarkup}</div></div></article>`;
+    }).join('') || '<div class="friends-empty">Este amigo todavía no ha marcado cartas.</div>';
+    const progressMarkup = Object.entries(setDefinitions).map(([setCode, definition]) => {
+      const ids = new Set(allCatalogCards.filter(card => card.set_code === setCode).map(card => card.id));
+      const setCollection = collection.filter(item => ids.has(item.card_id));
+      const baseOwned = new Set(setCollection.map(item => item.card_id)).size;
+      const basePercent = definition.cards ? Math.round(baseOwned / definition.cards * 100) : 0;
+      const variantPercent = definition.variants ? Math.round(setCollection.length / definition.variants * 100) : 0;
+      return `<article class="friend-set-progress"><div><strong>${escapeHTML(definition.name)}</strong><small>${baseOwned}/${definition.cards} cartas</small></div><div class="friend-progress-line"><span>Set completo</span><b>${basePercent}%</b></div><div class="progress"><span style="width:${basePercent}%"></span></div><div class="friend-progress-line"><span>Variantes</span><b>${variantPercent}%</b></div><div class="progress variant-progress"><span style="width:${variantPercent}%"></span></div></article>`;
+    }).join('');
+    const albumMarkup = sharedAlbums.map(album => `<article class="friend-shared-album"><div class="album-cover ${album.cover_style === 'teal' ? 'alt' : album.cover_style === 'gold' ? 'gold' : ''}"><b>${escapeHTML(album.title)}</b><span>Álbum compartido</span></div><div><strong>${escapeHTML(album.title)}</strong><p>${escapeHTML(album.description || 'Sin descripción.')}</p></div></article>`).join('') || '<div class="friends-empty">No ha compartido ningún álbum.</div>';
+    const totalCopies = collection.reduce((sum, item) => sum + Number(item.quantity), 0);
+    const startedSets = Object.keys(setDefinitions).filter(setCode => collection.some(item => item.card_id.startsWith(`${setCode}-`))).length;
+    const safeColor = /^#[0-9a-f]{6}$/i.test(profile.avatar_color || '') ? profile.avatar_color : '#ffd255';
+    el('friend-profile-content').innerHTML = `<header class="friend-profile-header"><div class="avatar large" style="background:${safeColor}">${escapeHTML(profile.display_name.trim().charAt(0).toUpperCase())}</div><div><p class="eyebrow">PERFIL DE ENTRENADOR</p><h1>${escapeHTML(profile.display_name)}</h1><p>${totalCopies} copias · ${groupedCollection.size} cartas distintas · ${startedSets} sets iniciados</p></div></header><section class="friend-profile-section"><div class="section-heading"><div><h2>Escaparate</h2><p>Sus cartas destacadas.</p></div></div><div class="friend-featured-grid">${featuredMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Progreso por sets</h2><p>Set numerado y master set.</p></div></div><div class="friend-progress-grid">${progressMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Colección</h2><p>Vista de solo lectura.</p></div></div><div class="friend-collection-grid">${collectionMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Álbumes compartidos</h2><p>Displays visibles para sus amigos.</p></div></div><div class="friend-album-grid">${albumMarkup}</div></section>`;
+  } catch (error) {
+    el('friend-profile-content').innerHTML = `<div class="friends-empty">No se pudo cargar el perfil: ${escapeHTML(error.message)}</div>`;
+  }
+}
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.view === id));
   if (id === 'coleccion') showCollectionIndex();
-  if (id === 'amigos' && remoteUser) loadFriends().catch(error => showToast(`No se pudieron cargar los amigos: ${error.message}`, true));
+  if (id === 'amigos') {
+    showFriendsOverview();
+    if (remoteUser) loadFriends().catch(error => showToast(`No se pudieron cargar los amigos: ${error.message}`, true));
+  }
   document.querySelector('.sidebar').classList.remove('open'); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function showCollectionIndex() {
@@ -270,6 +324,11 @@ el('friend-requests').addEventListener('click', async event => {
   showToast(action === 'accept' ? 'Ya sois amigos.' : 'Solicitud eliminada.');
   await loadFriends();
 });
+el('friends-list').addEventListener('click', event => {
+  const button = event.target.closest('[data-view-friend]');
+  if (button) openFriendProfile(button.dataset.viewFriend);
+});
+el('back-to-friends').addEventListener('click', showFriendsOverview);
 el('open-card-modal')?.addEventListener('click', () => el('card-modal').showModal());
 el('open-album-modal').addEventListener('click', () => el('album-modal').showModal());
 el('save-card')?.addEventListener('click', (event) => { const form = event.target.closest('form'); if (!form.checkValidity()) return; cards.unshift({ name: el('new-card-name').value, set: el('new-card-set').value, number: el('new-card-number').value, quantity: +el('new-card-quantity').value, rarity: el('new-card-rarity').value, icon: '✦', art: 'yellow' }); save(); renderCards(); form.reset(); });

@@ -39,6 +39,11 @@ window.pokeBinderRemote = (() => {
       if (error) throw error;
       return data;
     },
+    async loadPublicProfile(userId) {
+      const { data, error } = await client.from('profiles').select('id, display_name, avatar_color, featured_card_ids').eq('id', userId).single();
+      if (error) throw error;
+      return data;
+    },
     async loadFriendships(userId) {
       const { data, error } = await client.from('friendships').select('id, requester_id, addressee_id, status, created_at, requester:profiles!friendships_requester_id_fkey(id, display_name, avatar_color), addressee:profiles!friendships_addressee_id_fkey(id, display_name, avatar_color)').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`).order('created_at', { ascending: false });
       if (error) throw error;

@@ -80,10 +80,13 @@
         </section>
 
         <section class="view" id="amigos">
-          <div class="page-heading"><div><p class="eyebrow">COMUNIDAD</p><h1>Amigos</h1><p>Comparte la aventura con tu círculo.</p></div></div>
-          <section class="friend-search-panel"><div><h2>Encuentra a un entrenador</h2><p>Busca por el nombre visible de su perfil.</p></div><label class="friend-search"><span>⌕</span><input id="friend-search-input" placeholder="Buscar entrenador..." autocomplete="off" /><button id="friend-search-button" type="button">Buscar</button></label><div id="friend-search-results"></div></section>
-          <section class="friend-section" id="friend-requests-section"><div class="section-heading"><div><h2>Solicitudes</h2><p>Peticiones recibidas y enviadas.</p></div></div><div id="friend-requests"></div></section>
-          <section class="friend-section"><div class="section-heading"><div><h2>Mis amigos</h2><p>Entrenadores conectados contigo.</p></div></div><div class="friends-grid" id="friends-list"></div></section>
+          <div id="friends-overview">
+            <div class="page-heading"><div><p class="eyebrow">COMUNIDAD</p><h1>Amigos</h1><p>Comparte la aventura con tu círculo.</p></div></div>
+            <section class="friend-search-panel"><div><h2>Encuentra a un entrenador</h2><p>Busca por el nombre visible de su perfil.</p></div><label class="friend-search"><span>⌕</span><input id="friend-search-input" placeholder="Buscar entrenador..." autocomplete="off" /><button id="friend-search-button" type="button">Buscar</button></label><div id="friend-search-results"></div></section>
+            <section class="friend-section" id="friend-requests-section"><div class="section-heading"><div><h2>Solicitudes</h2><p>Peticiones recibidas y enviadas.</p></div></div><div id="friend-requests"></div></section>
+            <section class="friend-section"><div class="section-heading"><div><h2>Mis amigos</h2><p>Entrenadores conectados contigo.</p></div></div><div class="friends-grid" id="friends-list"></div></section>
+          </div>
+          <div id="friend-profile" hidden><button class="back-button" id="back-to-friends">← Todos mis amigos</button><div id="friend-profile-content"></div></div>
         </section>
 
         <section class="view" id="trades">
