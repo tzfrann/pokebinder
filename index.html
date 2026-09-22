@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f53a4b" />
+    <title>PokéBinder — Tu colección Pokémon</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="install.css" />
+    <link rel="stylesheet" href="auth.css" />
+    <link rel="stylesheet" href="catalog.css" />
+    <link rel="stylesheet" href="collection-library.css" />
+    <link rel="stylesheet" href="quantity.css" />
+    <link rel="stylesheet" href="hero-showcase.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#inicio" data-view="inicio"><span class="pokeball">◒</span>Poké<span>Binder</span></a>
+        <nav aria-label="Navegación principal">
+          <button class="nav-link active" data-view="inicio"><span>⌂</span> Inicio</button>
+          <button class="nav-link" data-view="coleccion"><span>▦</span> Mi colección</button>
+          <button class="nav-link" data-view="albumes"><span>▤</span> Mis álbumes</button>
+          <button class="nav-link" data-view="amigos"><span>♧</span> Amigos</button>
+          <button class="nav-link" data-view="trades"><span>⇄</span> Trades</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="user-mini"><div class="avatar" id="sidebar-avatar">?</div><div><strong id="sidebar-name">Sin sesión</strong><small id="sidebar-status">Acceso privado</small></div><button aria-label="Configuración">•••</button></div>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <button class="menu-button" aria-label="Abrir menú">☰</button>
+          <div class="mobile-brand">PokéBinder</div>
+          <div class="top-actions"><button class="auth-button" id="auth-button">Entrar</button><button class="icon-button" aria-label="Notificaciones">♢<i></i></button><div class="avatar small" id="top-avatar">?</div></div>
+        </header>
+        <div class="install-banner" id="install-banner" hidden><span>◒</span><p><b>Instala PokéBinder</b><small>Ábrela desde tu pantalla de inicio.</small></p><button id="install-app">Instalar</button><button class="dismiss-install" id="dismiss-install" aria-label="Cerrar">×</button></div>
+
+        <section class="view active" id="inicio">
+          <div class="hero hero-showcase">
+            <div class="hero-copy"><p class="eyebrow">BUENAS, <span id="welcome-name">ENTRENADOR</span></p><h1>Tu colección,<br />siempre contigo.</h1><p>Organiza tus cartas, crea tu escaparate y compártelo con tus amigos.</p><div class="hero-metrics"><span><b id="hero-total-cards">0</b> copias</span><span><b id="hero-unique-cards">0</b> cartas distintas</span><span><b id="hero-set-count">2</b> sets</span></div><button class="primary-button" data-view="coleccion">Explorar mi colección <span>→</span></button></div>
+            <div class="featured-showcase"><div class="featured-heading"><div><small>MI ESCAPARATE</small><strong>Cartas destacadas</strong></div><button id="edit-featured-cards" type="button">Editar</button></div><div class="featured-cards" id="featured-cards"></div></div>
+          </div>
+          <div class="section-heading"><div><h2>Resumen de colección</h2><p>Así va tu aventura.</p></div><button class="text-button" data-view="coleccion">Ver todo →</button></div>
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-icon red">▦</div><div><strong id="total-cards">24</strong><span>Cartas en colección</span></div></article>
+            <article class="stat-card"><div class="stat-icon yellow">★</div><div><strong id="unique-cards">18</strong><span>Cartas únicas</span></div></article>
+            <article class="stat-card"><div class="stat-icon green">◎</div><div><strong id="available-sets-count">2</strong><span id="available-sets-label">Sets disponibles</span></div></article>
+          </div>
+          <div class="dashboard-grid">
+            <section class="panel progress-panel"><div class="panel-title"><div><h2>Sets en progreso</h2><p>Set numerado y master set.</p></div></div><div class="set-progress-card"><div class="set-progress-heading"><div class="set-symbol purple">✧</div><div><strong>XY Base Set</strong><small>Era XY</small></div></div><div class="progress-metric"><div><span>Set completo</span><b><span id="base-progress-count">0</span>/146 · <span id="base-progress-percent">0%</span></b></div><div class="progress"><span id="base-progress-bar" style="width:0%"></span></div></div><div class="progress-metric"><div><span>Todas las variantes</span><b><span id="variant-progress-count">0</span>/<span id="variant-progress-total">269</span> · <span id="variant-progress-percent">0%</span></b></div><div class="progress variant-progress"><span id="variant-progress-bar" style="width:0%"></span></div></div></div></section>
+            <section class="panel activity-panel"><div class="panel-title"><div><h2>Actividad de amigos</h2><p>Aparecerá cuando añadas amigos.</p></div><button class="text-button" data-view="amigos">Ir a amigos →</button></div><div class="clean-placeholder"><span>♧</span><p>Todavía no hay actividad.</p></div></section>
+          </div>
+        </section>
+
+        <section class="view" id="coleccion">
+          <div id="collection-index">
+            <div class="page-heading"><div><p class="eyebrow">TU TRACKLIST</p><h1>Mi colección</h1><p>Explora tus sets organizados por eras.</p></div></div>
+            <div id="set-library-root"><div class="clean-placeholder"><span>◎</span><p>Inicia sesión para cargar el catálogo de sets.</p></div></div>
+          </div>
+          <div id="collection-detail" hidden>
+            <button class="back-button" id="back-to-sets">← Todos los sets</button>
+            <div class="page-heading"><div><p class="eyebrow">ERA XY</p><h1 id="active-set-name">XY Base Set</h1><p>Marca cada impresión que forma parte de tu colección.</p></div><span class="set-badge" id="active-set-badge">146 cartas · 269 variantes</span></div>
+            <div class="collection-toolbar"><label class="search"><span>⌕</span><input id="card-search" placeholder="Buscar una carta de XY..." /></label><select id="rarity-filter"><option value="all">Todas las rarezas</option><option value="Common">Common</option><option value="Uncommon">Uncommon</option><option value="Rare">Rare</option><option value="Rare Holo">Rare Holo</option><option value="Rare Holo EX">Rare Holo EX</option><option value="Rare Ultra">Rare Ultra</option><option value="Rare Secret">Rare Secret</option></select></div>
+            <div class="collection-summary"><span><b id="collection-count">0</b> de <b id="set-total">0</b> variantes</span><span class="dot">•</span><span><b id="base-owned-count">0</b> de 146 cartas numeradas</span><span class="dot">•</span><span><b id="duplicates-count">0</b> repetidas</span></div>
+            <div class="card-grid" id="card-grid"></div>
+          </div>
+        </section>
+
+        <section class="view" id="albumes">
+          <div class="page-heading"><div><p class="eyebrow">TU ESCAPARATE</p><h1>Mis álbumes</h1><p>Crea espacios para enseñar tus mejores cartas.</p></div><button class="primary-button" id="open-album-modal">+ Crear álbum</button></div>
+          <div class="album-grid" id="album-grid"></div>
+        </section>
+
+        <section class="view" id="amigos">
+          <div class="page-heading"><div><p class="eyebrow">COMUNIDAD</p><h1>Amigos</h1><p>Comparte la aventura con tu círculo.</p></div><button class="primary-button">+ Invitar amigo</button></div>
+          <div class="friends-grid"><article class="invite-card"><span>＋</span><h3>Aún no tienes amigos</h3><p>Cuando conectemos las invitaciones, aparecerán aquí.</p></article></div>
+        </section>
+
+        <section class="view" id="trades">
+          <div class="page-heading"><div><p class="eyebrow">INTERCAMBIOS</p><h1>Trades</h1><p>Encuentra la carta que te falta.</p></div><button class="primary-button">+ Publicar trade</button></div>
+          <div class="empty-state"><div>⇄</div><h2>Próximamente, tu mercado privado</h2><p>Aquí aparecerán las cartas que tus amigos venden, buscan o quieren intercambiar.</p><button class="secondary-button" data-view="amigos">Ver amigos</button></div>
+        </section>
+      </main>
+    </div>
+    <dialog id="album-modal"><form method="dialog" class="modal"><button class="modal-close" type="button" aria-label="Cerrar">×</button><p class="eyebrow">NUEVO DISPLAY</p><h2>Crear un álbum</h2><label>Nombre del álbum<input id="new-album-name" required placeholder="Ej. Mis favoritos" /></label><label>Descripción<textarea id="new-album-description" placeholder="¿Qué hace especial a este álbum?"></textarea></label><label>Visibilidad<select id="new-album-visibility"><option>Solo yo</option><option>Mis amigos</option></select></label><button class="primary-button wide" id="save-album" value="default">Crear álbum</button></form></dialog>
+    <dialog id="auth-modal"><form class="modal" id="auth-form"><button class="modal-close" type="button" id="close-auth" aria-label="Cerrar">×</button><p class="eyebrow">ACCESO PRIVADO</p><h2>Entra en PokéBinder</h2><p class="auth-help">Usa el correo y la contraseña que configuraste al aceptar tu invitación.</p><label>Correo electrónico<input id="auth-email" type="email" autocomplete="email" required /></label><label>Contraseña<input id="auth-password" type="password" autocomplete="current-password" required /></label><p class="auth-message" id="auth-message" aria-live="polite"></p><button class="primary-button wide" type="submit">Entrar</button></form></dialog>
+    <dialog id="password-modal"><form class="modal" id="password-form"><p class="eyebrow">BIENVENIDO</p><h2>Configura tu perfil</h2><p class="auth-help">Tu invitación ya te ha iniciado sesión. Elige cómo te verán tus amigos y una contraseña para próximas visitas.</p><label>Nombre visible<input id="display-name" autocomplete="name" minlength="2" maxlength="30" required placeholder="Tu nombre" /></label><label>Nueva contraseña<input id="new-password" type="password" autocomplete="new-password" minlength="8" required /></label><label>Repite la contraseña<input id="repeat-password" type="password" autocomplete="new-password" minlength="8" required /></label><p class="auth-message" id="password-message" aria-live="polite"></p><button class="primary-button wide" type="submit">Guardar perfil</button></form></dialog>
+    <dialog id="install-help-modal"><div class="modal install-help"><button class="modal-close" type="button" aria-label="Cerrar">×</button><p class="eyebrow">INSTALAR POKÉBINDER</p><h2>Añádela a tu pantalla de inicio</h2><div id="install-help-content"></div><button class="primary-button wide" type="button" id="close-install-help">Entendido</button></div></dialog>
+    <dialog id="featured-modal"><div class="modal featured-modal"><button class="modal-close" type="button" aria-label="Cerrar">×</button><p class="eyebrow">MI ESCAPARATE</p><h2>Elige tus cartas destacadas</h2><p class="auth-help">Puedes seleccionar hasta tres cartas de tu colección.</p><div id="featured-selects"></div><p class="auth-message" id="featured-message" aria-live="polite"></p><button class="primary-button wide" type="button" id="save-featured-cards">Guardar escaparate</button></div></dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase/config.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

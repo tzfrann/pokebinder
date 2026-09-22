@@ -1,0 +1,60 @@
+.variant-control {
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.variant-control .variant-toggle {
+  flex: 1;
+  min-width: 0;
+}
+
+.quantity-stepper {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 1px solid #f1a7ad;
+  border-radius: 8px;
+  color: #d83d49;
+  background: #fff5f6;
+}
+
+.quantity-stepper button {
+  width: 28px;
+  height: 100%;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  color: #d83d49;
+  background: transparent;
+  font: 700 17px 'DM Sans';
+  cursor: pointer;
+}
+
+.quantity-stepper button:hover {
+  background: #ffe4e7;
+}
+
+.quantity-stepper button:disabled {
+  opacity: .4;
+  cursor: wait;
+}
+
+.quantity-stepper strong {
+  min-width: 30px;
+  padding: 0 3px;
+  text-align: center;
+  font: 700 11px 'DM Sans';
+}
+
+@media (max-width: 430px) {
+  .variant-control {
+    flex-wrap: wrap;
+  }
+
+  .quantity-stepper {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

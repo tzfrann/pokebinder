@@ -1,0 +1,10 @@
+{
+  "name": "pokebinder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Colección privada de cartas Pokémon.",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node dev-server.js"
+  }
+}

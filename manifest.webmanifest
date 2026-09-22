@@ -1,0 +1,11 @@
+{
+  "name": "PokéBinder",
+  "short_name": "PokéBinder",
+  "description": "Tu colección Pokémon, en un solo lugar.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fb",
+  "theme_color": "#f53a4b",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
