@@ -12,7 +12,7 @@ Fecha de revisión de esta guía: 1 de octubre de 2026. Describe el código del 
 - Escaparate de hasta tres cartas poseídas.
 - Búsqueda de perfiles, solicitudes de amistad y aceptación o rechazo. Los amigos pueden ver el perfil, progreso y detalle de cada set de otro usuario.
 - Cada variante poseída se puede marcar o desmarcar como «Disponible para intercambio», incluso si solo hay una copia. Los amigos ven todas las variantes marcadas en su perfil y pueden filtrar las que les faltan. El detalle de cada set también muestra la disponibilidad.
-- Trades muestra en lista todas las variantes que el usuario ha marcado como disponibles y permite retirarlas. El interruptor «Añadir repetidas automáticamente» guarda su estado en los metadatos de la cuenta: al activarlo marca las repetidas actuales y luego marca las variantes que pasen de una a dos copias; al desactivarlo conserva las marcas anteriores.
+- Trades tiene tres apartados: anuncios activos de amigos y propios, formulario para publicar un anuncio de intercambio/búsqueda/venta, y gestión de variantes disponibles. El dueño puede cerrar su anuncio. El interruptor «Añadir repetidas automáticamente» guarda su estado en los metadatos de la cuenta: al activarlo marca las repetidas actuales y luego marca las variantes que pasen de una a dos copias; al desactivarlo conserva las marcas anteriores.
 - Álbumes con nombre, descripción, estilo y visibilidad `private` o `friends`.
 - PWA instalable. El service worker guarda los archivos de la aplicación; las imágenes y los datos de Supabase dependen de la conexión.
 
@@ -36,6 +36,6 @@ Los sets visibles en la web salen de `card_sets`, no de esta tabla. Si no aparec
 
 - Los álbumes todavía **no permiten escoger ni ordenar cartas**. La tabla `album_cards` existe, pero la interfaz actual solo guarda la cabecera del álbum. «Ver álbum» todavía no abre un contenido real.
 - La sincronización actual de álbumes borra y reinserta sus filas, cambiando los IDs. Hay que corregirla antes de añadir cartas persistentes a cada álbum.
-- La sección **Trades** gestiona disponibilidad, pero todavía no publica anuncios ni ofrece solicitudes o mensajes de intercambio. La tabla `trade_posts` existe, pero el frontend no la utiliza.
+- Los anuncios de Trades son textos libres y, para ventas, un precio opcional. Aún no están vinculados a IDs concretos de cartas ni incluyen solicitudes o mensajes dentro de la web. Para negociar, los amigos necesitan comunicarse fuera de PokéBinder.
 - Faltan los filtros equivalentes dentro de los sets de amigos.
 - El catálogo no se administra desde la web: cada set nuevo requiere preparar y ejecutar un SQL.

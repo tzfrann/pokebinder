@@ -9,6 +9,34 @@
   background: #fff;
 }
 
+.trades-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+.trades-nav button { padding: 10px 14px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: #5a6874; font: 700 12px 'DM Sans'; cursor: pointer; }
+.trades-nav button[aria-current="page"] { border-color: #f5b0b5; background: #fff0f1; color: var(--red); }
+.trades-panel[hidden], #trade-price-field[hidden] { display: none; }
+.trades-panel .section-heading { margin-top: 0; }
+.trade-inline-action { padding: 8px 12px; border: 1px solid #f5b0b5; border-radius: 8px; background: #fff; color: var(--red); font: 700 12px 'DM Sans'; cursor: pointer; }
+.trade-post-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 13px; }
+.trade-post-list > .my-trade-empty { grid-column: 1 / -1; }
+.trade-post { display: flex; flex-direction: column; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.trade-post-top, .trade-post-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.trade-post-kind { padding: 5px 8px; border-radius: 99px; background: #e7f7ef; color: #247655; font-size: 10px; font-weight: 800; }
+.trade-post-kind.want { background: #edf3fd; color: #356db0; }
+.trade-post-kind.sell { background: #fff3d9; color: #9c700c; }
+.trade-post-price { font-size: 14px; }
+.trade-post h3 { margin: 13px 0 5px; font: 600 20px Fredoka; overflow-wrap: anywhere; }
+.trade-post p { flex: 1; margin: 0 0 19px; color: #5b6873; font-size: 12px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+.trade-post-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.trade-post-footer button { border: 0; background: transparent; color: #be4750; font: 700 11px 'DM Sans'; cursor: pointer; }
+.trade-post-footer button:disabled { opacity: .5; cursor: wait; }
+.trade-post-form { display: grid; gap: 15px; max-width: 660px; padding: 24px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.trade-post-form label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
+.trade-post-form input, .trade-post-form select, .trade-post-form textarea { width: 100%; padding: 10px; border: 1px solid #dfe5e9; border-radius: 8px; background: #fff; color: var(--ink); font: 13px 'DM Sans'; }
+.trade-post-form textarea { resize: vertical; }
+.trade-form-actions { display: flex; align-items: center; gap: 9px; }
+.trade-form-actions .primary-button { background: var(--red); color: #fff; }
+.trade-form-actions .secondary-button { margin: 0; }
+.trade-form-actions button:disabled { opacity: .5; cursor: wait; }
+
 .trade-settings h2 { margin: 0 0 5px; font: 600 20px Fredoka; }
 .trade-settings p { max-width: 620px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .trade-auto-toggle { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 12px 'DM Sans'; cursor: pointer; }
@@ -31,6 +59,9 @@
 .my-trade-remove:disabled { opacity: .5; cursor: wait; }
 .my-trade-empty { padding: 26px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; color: var(--muted); font-size: 13px; text-align: center; }
 @media (max-width: 600px) {
+  .trades-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trades-nav button { padding: 9px 7px; font-size: 11px; }
+  .trade-post-list { grid-template-columns: 1fr; }
   .trade-settings { align-items: flex-start; flex-direction: column; gap: 16px; }
   .my-trade-row { gap: 10px; padding: 9px; }
   .my-trade-row img { width: 45px; height: 62px; }

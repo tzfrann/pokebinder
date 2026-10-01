@@ -136,6 +136,26 @@ window.pokeBinderRemote = (() => {
     async updateTradeAvailability(userId, cardId, variantCode, available) {
       return client.from('user_card_collection').update({ available_for_trade: available }).eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode).select('card_id').single();
     },
+    async loadActiveTradePosts() {
+      const pageSize = 200;
+      const rows = [];
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await client.from('trade_posts')
+          .select('id, user_id, kind, title, description, price_cents, created_at, author:profiles!trade_posts_user_id_fkey(display_name)')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        rows.push(...data);
+        if (data.length < pageSize) return rows;
+      }
+    },
+    async createTradePost(userId, post) {
+      return client.from('trade_posts').insert({ user_id: userId, ...post });
+    },
+    async closeTradePost(userId, postId) {
+      return client.from('trade_posts').update({ status: 'closed' }).eq('id', postId).eq('user_id', userId).select('id').single();
+    },
     async replaceCards(userId, cards) {
       const { error: removeError } = await client.from('cards').delete().eq('user_id', userId);
       if (removeError) throw removeError;

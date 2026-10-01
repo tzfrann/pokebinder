@@ -17,6 +17,8 @@ let friendships = [];
 let activeFriendProfile = null;
 let friendTradeFilter = 'all';
 let autoTradeDuplicates = false;
+let activeTradePosts = [];
+let tradeLoadRequest = 0;
 let featuredCardIds = JSON.parse(localStorage.getItem('pokebinder-featured-cards') || '[]').slice(0, 3);
 function applyIdentity(name = null) {
   const displayName = name || 'Sin sesión';
@@ -200,6 +202,40 @@ function renderTrades() {
     return `<article class="my-trade-row"><img src="${escapeHTML(card.image_small_url)}" alt="${escapeHTML(card.name)}" loading="lazy" /><div class="my-trade-details"><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)} · ${escapeHTML(variant?.label || item.variant_code)}</small><span>${Number(item.quantity)} ${Number(item.quantity) === 1 ? 'copia en tu colección' : 'copias en tu colección'}</span></div><button type="button" class="my-trade-remove" data-remove-trade data-card-id="${escapeHTML(item.card_id)}" data-variant-code="${escapeHTML(item.variant_code)}" aria-label="Retirar ${escapeHTML(card.name)} ${escapeHTML(variant?.label || item.variant_code)} de intercambios">Retirar</button></article>`;
   }).join('') || `<div class="my-trade-empty">${remoteUser ? 'Todavía no has marcado cartas para intercambio.' : 'Entra en tu cuenta para gestionar intercambios.'}</div>`;
 }
+function renderTradePosts() {
+  const labels = { trade: 'Intercambio', want: 'Busco', sell: 'Venta' };
+  el('trade-post-list').innerHTML = activeTradePosts.map(post => {
+    const mine = post.user_id === remoteUser?.id;
+    const author = Array.isArray(post.author) ? post.author[0] : post.author;
+    const date = new Date(post.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    const price = post.kind === 'sell' && post.price_cents !== null ? `<strong class="trade-post-price">${(post.price_cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</strong>` : '';
+    return `<article class="trade-post"><div class="trade-post-top"><span class="trade-post-kind ${escapeHTML(post.kind)}">${labels[post.kind] || 'Trade'}</span>${price}</div><h3>${escapeHTML(post.title)}</h3>${post.description ? `<p>${escapeHTML(post.description)}</p>` : ''}<div class="trade-post-footer"><span>${escapeHTML(author?.display_name || 'Entrenador')} · ${escapeHTML(date)}</span>${mine ? `<button type="button" data-close-trade="${escapeHTML(post.id)}">Cerrar anuncio</button>` : ''}</div></article>`;
+  }).join('') || `<div class="my-trade-empty">${remoteUser ? 'No hay trades activos en tu círculo. Puedes publicar el primero.' : 'Inicia sesión para ver los trades de tus amigos.'}</div>`;
+}
+async function loadTradePosts() {
+  const request = ++tradeLoadRequest;
+  if (!remoteUser) { activeTradePosts = []; renderTradePosts(); return; }
+  el('trade-post-list').innerHTML = '<div class="my-trade-empty">Cargando trades…</div>';
+  try {
+    const posts = await remote.loadActiveTradePosts();
+    if (request !== tradeLoadRequest) return;
+    activeTradePosts = posts;
+    renderTradePosts();
+  } catch (error) {
+    if (request !== tradeLoadRequest) return;
+    el('trade-post-list').innerHTML = `<div class="my-trade-empty">No se pudieron cargar los trades: ${escapeHTML(error.message)}</div>`;
+  }
+}
+function showTradesPanel(panel) {
+  if (!['feed', 'create', 'available'].includes(panel)) return;
+  document.querySelectorAll('#trades .trades-panel').forEach(element => { element.hidden = element.id !== `trades-${panel}-panel`; });
+  document.querySelectorAll('#trades .trades-nav button').forEach(button => {
+    if (button.dataset.tradesPanel === panel) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+  if (panel === 'feed') loadTradePosts();
+  if (panel === 'available') renderTrades();
+}
 const profileAvatar = profile => {
   const color = /^#[0-9a-f]{6}$/i.test(profile?.avatar_color || '') ? profile.avatar_color : '#ffd255';
   return `<div class="avatar" style="background:${color}">${escapeHTML(profile?.display_name?.trim().charAt(0).toUpperCase() || '?')}</div>`;
@@ -340,6 +376,7 @@ function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.view === id));
   if (id === 'coleccion') showCollectionIndex();
+  if (id === 'trades') showTradesPanel('feed');
   if (id === 'amigos') {
     showFriendsOverview();
     if (remoteUser) loadFriends().catch(error => showToast(`No se pudieron cargar los amigos: ${error.message}`, true));
@@ -431,6 +468,55 @@ el('friend-profile-content').addEventListener('click', event => {
   }
 });
 el('back-to-friends').addEventListener('click', showFriendsOverview);
+el('trades').addEventListener('click', event => {
+  const panelButton = event.target.closest('[data-trades-panel]');
+  if (panelButton) { showTradesPanel(panelButton.dataset.tradesPanel); return; }
+  const closeButton = event.target.closest('[data-close-trade]');
+  if (!closeButton || !remoteUser || closeButton.disabled) return;
+  closeButton.disabled = true;
+  (async () => {
+    try {
+      const { error } = await remote.closeTradePost(remoteUser.id, closeButton.dataset.closeTrade);
+      if (error) throw error;
+      showToast('Anuncio cerrado. Ya no aparece entre los trades activos.');
+      await loadTradePosts();
+    } catch (error) {
+      closeButton.disabled = false;
+      showToast(`No se pudo cerrar: ${error.message}`, true);
+    }
+  })();
+});
+el('trade-post-kind').addEventListener('change', event => {
+  const selling = event.target.value === 'sell';
+  el('trade-price-field').hidden = !selling;
+  if (!selling) el('trade-post-price').value = '';
+});
+el('trade-post-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!remoteUser) { showToast('Inicia sesión para publicar un trade.', true); return; }
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const button = form.querySelector('[type="submit"]');
+  const kind = el('trade-post-kind').value;
+  const title = el('trade-post-title').value.trim();
+  const description = el('trade-post-description').value.trim();
+  const priceInput = el('trade-post-price').value;
+  if (title.length < 3) { showToast('El título necesita al menos tres caracteres.', true); return; }
+  const priceCents = kind === 'sell' && priceInput !== '' ? Math.round(Number(priceInput) * 100) : null;
+  button.disabled = true;
+  try {
+    const { error } = await remote.createTradePost(remoteUser.id, { kind, title, description: description || null, price_cents: priceCents });
+    if (error) throw error;
+    form.reset();
+    el('trade-price-field').hidden = true;
+    showTradesPanel('feed');
+    showToast('Trade publicado para tus amigos.');
+  } catch (error) {
+    showToast(`No se pudo publicar: ${error.message}`, true);
+  } finally {
+    button.disabled = false;
+  }
+});
 el('auto-trade-duplicates').addEventListener('click', async event => {
   const button = event.currentTarget;
   if (!remoteUser || button.disabled) return;
@@ -665,6 +751,7 @@ function clearCloudSession() {
   catalogCards = []; allCatalogCards = []; catalogEras = []; setDefinitions = {};
   variantsByCard = new Map(); ownedCards = new Map(); friendships = []; activeFriendProfile = null;
   autoTradeDuplicates = false;
+  activeTradePosts = []; tradeLoadRequest += 1;
   albums = []; featuredCardIds = [];
   applyIdentity();
   el('available-sets-count').textContent = '0';
@@ -673,6 +760,7 @@ function clearCloudSession() {
   if (el('password-modal').open) el('password-modal').close();
   showFriendsOverview();
   renderCards(); renderAlbums(); renderFriendships();
+  renderTradePosts();
 }
 const sessionMissing = error => error?.name === 'AuthSessionMissingError' || /auth session missing/i.test(error?.message || '');
 el('auth-button').addEventListener('click', async () => {

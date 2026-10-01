@@ -17,7 +17,7 @@ El orden de carga al iniciar sesión en `activateCloudSession()` es: perfil y es
 | `user_card_collection` | Clave `(user_id, card_id, variant_code)` y cantidad. La ausencia de una fila significa que no se posee esa variante. |
 | `friendships` | Solicitudes pendientes o aceptadas. Un índice impide duplicados en ambas direcciones. |
 | `albums`, `album_cards` | Cabeceras de álbum y tabla preparada para sus cartas; esta última no está conectada a la interfaz. |
-| `cards`, `trade_posts` | Tablas del esquema inicial. `cards` pertenece al prototipo previo; los anuncios de `trade_posts` todavía no tienen interfaz funcional. |
+| `cards`, `trade_posts` | `cards` pertenece al prototipo previo. `trade_posts` alimenta los anuncios activos; RLS permite leer solo anuncios propios o de amigos aceptados y editar solo los propios. |
 
 ## Privacidad y permisos
 
