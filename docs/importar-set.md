@@ -51,4 +51,4 @@ group by s.id, s.name, s.printed_total;
 
 ## Casos actuales
 
-Los seeds disponibles van de [`xy4`](../supabase/seed-xy4.sql) a [`xy9`](../supabase/seed-xy9.sql). `xy4` omite `24a` y `65a`; `xy6` omite `77a` y `92a`; `xy7` omite `75a`; `xy8` omite `146a`; `xy9` omite `98a`, `98b` y `107a`. Para `xy8` se esperan 164 cartas y 302 variantes; para `xy9`, 123 cartas y 220 variantes. Al redactar esta guía aún no hay confirmación de que todos los SQL `xy4` a `xy9` se hayan ejecutado en Supabase.
+Los seeds disponibles van de [`xy4`](../supabase/seed-xy4.sql) a [`xy9`](../supabase/seed-xy9.sql). `xy4` omite `24a` y `65a`; `xy6` omite `77a` y `92a`; `xy7` omite `75a`; `xy8` omite `146a`; `xy9` omite `98a`, `98b` y `107a`. Para `xy8` se esperan 164 cartas y 302 variantes; para `xy9`, 123 cartas y 220 variantes. El usuario indicó que los sets funcionan; queda pendiente una comprobación directa de los conteos en Supabase.

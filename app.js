@@ -10,6 +10,7 @@ let ownedCards = new Map();
 let variantsByCard = new Map();
 let variantMigrationReady = true;
 let activeSetCode = 'xy1';
+let collectionStateFilter = 'all';
 let setDefinitions = {};
 let catalogEras = [];
 let friendships = [];
@@ -47,16 +48,36 @@ function renderCards() {
   const set = activeSetCode, rarity = el('rarity-filter').value;
   const setDefinition = setDefinitions[set] || { name: 'este set', cards: catalogCards.length, variants: 0 };
   const source = catalogCards.length ? catalogCards : (remote ? [] : cards);
-  const filtered = source.filter(c => {
+  const matchingCards = source.filter(c => {
     const name = c.name;
     const cardSet = c.set_code || c.set;
     return (!q || `${name} ${cardSet}`.toLowerCase().includes(q)) && (set === 'all' || cardSet === set) && (rarity === 'all' || c.rarity === rarity);
   });
-  el('card-grid').innerHTML = filtered.map(c => {
+  const isOwned = (card, variant) => ownedCards.has(`${card.id}:${variant.variant_code}`);
+  const matchesState = (card, variant, state) => {
+    if (state === 'all') return true;
+    const owned = ownedCards.get(`${card.id}:${variant.variant_code}`);
+    if (state === 'owned') return Boolean(owned);
+    if (state === 'missing') return !owned;
+    return Number(owned?.quantity || 0) > 1;
+  };
+  const variantCounts = { all: 0, owned: 0, missing: 0, duplicates: 0 };
+  matchingCards.forEach(card => {
+    (variantsByCard.get(card.id) || []).forEach(variant => {
+      variantCounts.all += 1;
+      variantCounts[isOwned(card, variant) ? 'owned' : 'missing'] += 1;
+      if (Number(ownedCards.get(`${card.id}:${variant.variant_code}`)?.quantity || 0) > 1) variantCounts.duplicates += 1;
+    });
+  });
+  const stateLabels = { all: 'Todas', owned: 'Tengo', missing: 'Me faltan', duplicates: 'Repetidas' };
+  el('collection-state-filters').innerHTML = Object.entries(stateLabels).map(([state, label]) => `<button type="button" class="collection-state-filter ${collectionStateFilter === state ? 'active' : ''}" data-collection-state="${state}" aria-pressed="${collectionStateFilter === state}" ${catalogCards.length ? '' : 'disabled'}>${label} <span>${variantCounts[state]}</span></button>`).join('');
+  const filtered = matchingCards.map(card => ({ card, variants: (variantsByCard.get(card.id) || []).filter(variant => matchesState(card, variant, collectionStateFilter)) })).filter(entry => collectionStateFilter === 'all' || entry.variants.length);
+  const shownVariants = filtered.reduce((total, entry) => total + entry.variants.length, 0);
+  el('collection-filter-summary').textContent = catalogCards.length ? `Mostrando ${shownVariants} ${shownVariants === 1 ? 'variante' : 'variantes'} en ${filtered.length} ${filtered.length === 1 ? 'carta' : 'cartas'}.` : '';
+  el('card-grid').innerHTML = filtered.map(({ card: c, variants: visibleVariants }) => {
     if (catalogCards.length) {
-      const variants = variantsByCard.get(c.id) || [];
-      const ownedVariantCount = variants.filter(variant => ownedCards.has(`${c.id}:${variant.variant_code}`)).length;
-      const variantButtons = variants.map(variant => {
+      const ownedVariantCount = visibleVariants.filter(variant => ownedCards.has(`${c.id}:${variant.variant_code}`)).length;
+      const variantButtons = visibleVariants.map(variant => {
         const owned = ownedCards.get(`${c.id}:${variant.variant_code}`);
         const quantityControls = owned ? `<div class="quantity-stepper"><button type="button" data-quantity-action="decrease" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-label="Quitar una copia">−</button><strong aria-label="${owned.quantity} copias">×${owned.quantity}</strong><button type="button" data-quantity-action="increase" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-label="Añadir otra copia" ${Number(owned.quantity) >= 999 ? 'disabled' : ''}>+</button></div>` : '';
         return `<div class="variant-control"><button class="variant-toggle ${owned ? 'owned' : ''}" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-pressed="${Boolean(owned)}" ${variantMigrationReady ? '' : 'disabled'}><span class="check">${owned ? '✓' : ''}</span><span>${variant.label}</span></button>${quantityControls}</div>`;
@@ -64,7 +85,7 @@ function renderCards() {
       return `<article class="pokemon-card catalog-card ${ownedVariantCount ? 'owned-card' : ''}"><div class="card-art catalog-art"><img src="${c.image_small_url}" alt="${c.name}" loading="lazy" /></div><div class="card-info"><div class="card-name"><strong>${c.name}</strong><span>${c.card_number}/${setDefinition.printedTotal || setDefinition.cards}</span></div><p class="card-meta"><span>${c.set_name}</span><span>${c.rarity || 'Unknown'}</span></p><div class="variant-list">${variantButtons}</div></div></article>`;
     }
     return `<article class="pokemon-card"><div class="card-art art-${c.art}">${c.icon}</div><div class="card-info"><div class="card-name"><strong>${c.name}</strong><span>${c.number}</span></div><p>${c.set}</p><div class="card-bottom"><span class="rarity">${c.rarity}</span><span class="quantity">×${c.quantity}</span></div></div></article>`;
-  }).join('') || `<p>${remoteUser ? `No hemos podido cargar el catálogo de ${setDefinition.name}. Comprueba que su migración esté aplicada en Supabase.` : 'Inicia sesión para consultar y marcar tu colección.'}</p>`;
+  }).join('') || `<p class="collection-filter-empty">${catalogCards.length ? 'No hay variantes que coincidan con estos filtros.' : remoteUser ? `No hemos podido cargar el catálogo de ${setDefinition.name}. Comprueba que su migración esté aplicada en Supabase.` : 'Inicia sesión para consultar y marcar tu colección.'}</p>`;
   const activeCardIds = new Set(catalogCards.map(card => card.id));
   const activeOwnedCards = [...ownedCards.values()].filter(card => activeCardIds.has(card.card_id));
   const ownedVariantTotal = catalogCards.length ? activeOwnedCards.length : 0;
@@ -303,6 +324,7 @@ function showCollectionIndex() {
 }
 function showCollectionDetail(setCode = activeSetCode) {
   activeSetCode = setCode;
+  collectionStateFilter = 'all';
   catalogCards = allCatalogCards.filter(card => card.set_code === setCode);
   const definition = setDefinitions[setCode];
   el('active-set-name').textContent = definition.name;
@@ -317,6 +339,12 @@ function showCollectionDetail(setCode = activeSetCode) {
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 document.querySelector('.menu-button').addEventListener('click', () => document.querySelector('.sidebar').classList.toggle('open'));
 ['card-search', 'rarity-filter'].forEach(id => el(id).addEventListener('input', renderCards));
+el('collection-state-filters').addEventListener('click', event => {
+  const button = event.target.closest('[data-collection-state]');
+  if (!button || button.disabled) return;
+  collectionStateFilter = button.dataset.collectionState;
+  renderCards();
+});
 el('set-library-root').addEventListener('click', event => {
   const setButton = event.target.closest('[data-open-set]');
   if (setButton) showCollectionDetail(setButton.dataset.openSet);
