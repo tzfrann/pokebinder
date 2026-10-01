@@ -1,0 +1,38 @@
+.trade-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.trade-settings h2 { margin: 0 0 5px; font: 600 20px Fredoka; }
+.trade-settings p { max-width: 620px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.trade-auto-toggle { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 12px 'DM Sans'; cursor: pointer; }
+.trade-auto-toggle i { position: relative; display: block; width: 42px; height: 24px; border-radius: 99px; background: #d5dce1; transition: background .2s; }
+.trade-auto-toggle i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.trade-auto-toggle[aria-checked="true"] { color: #247655; }
+.trade-auto-toggle[aria-checked="true"] i { background: #42af77; }
+.trade-auto-toggle[aria-checked="true"] i::after { transform: translateX(18px); }
+.trade-auto-toggle:disabled { opacity: .5; cursor: wait; }
+.my-trade-list { display: grid; gap: 10px; }
+.my-trade-row { display: flex; align-items: center; gap: 14px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.my-trade-row img { width: 56px; height: 76px; object-fit: contain; flex: 0 0 auto; }
+.my-trade-details { min-width: 0; flex: 1; }
+.my-trade-details strong, .my-trade-details small, .my-trade-details span { display: block; }
+.my-trade-details strong { font: 600 16px Fredoka; }
+.my-trade-details small { margin: 3px 0; color: var(--muted); font-size: 11px; }
+.my-trade-details span { color: #247655; font-size: 11px; font-weight: 700; }
+.my-trade-remove { flex: 0 0 auto; padding: 8px 11px; border: 1px solid #e9c8cb; border-radius: 8px; background: #fff; color: #be4750; font: 700 11px 'DM Sans'; cursor: pointer; }
+.my-trade-remove:hover { background: #fff4f4; }
+.my-trade-remove:disabled { opacity: .5; cursor: wait; }
+.my-trade-empty { padding: 26px; border: 1px dashed var(--line); border-radius: 12px; background: #fff; color: var(--muted); font-size: 13px; text-align: center; }
+@media (max-width: 600px) {
+  .trade-settings { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .my-trade-row { gap: 10px; padding: 9px; }
+  .my-trade-row img { width: 45px; height: 62px; }
+  .my-trade-remove { padding: 7px; }
+}

@@ -16,6 +16,7 @@ let catalogEras = [];
 let friendships = [];
 let activeFriendProfile = null;
 let friendTradeFilter = 'all';
+let autoTradeDuplicates = false;
 let featuredCardIds = JSON.parse(localStorage.getItem('pokebinder-featured-cards') || '[]').slice(0, 3);
 function applyIdentity(name = null) {
   const displayName = name || 'Sin sesión';
@@ -126,6 +127,7 @@ function renderCards() {
   el('variant-progress-bar').style.width = `${xy1VariantProgress}%`;
   updateLibraryProgress();
   renderFeaturedCards();
+  renderTrades();
 }
 function renderFeaturedCards() {
   const ownedIds = new Set([...ownedCards.values()].map(card => card.card_id));
@@ -180,6 +182,24 @@ function renderAlbums() {
   el('album-grid').innerHTML = albums.map(a => `<article class="album-card"><div class="album-cover ${a.style}"><b>${a.name}</b><span>${a.cards} cartas</span></div><div class="album-body"><h3>${a.name}</h3><p>${a.description || 'Un álbum de tu colección.'}</p><div class="album-footer"><span>${a.visibility === 'Solo yo' ? '◉ Privado' : '♧ Amigos'}</span><button class="text-button">Ver álbum →</button></div></div></article>`).join('') || '<div class="clean-empty"><span>▤</span><h3>No tienes álbumes todavía</h3><p>Crea el primero cuando quieras organizar una selección de cartas.</p></div>';
 }
 const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+function renderTrades() {
+  const toggle = el('auto-trade-duplicates');
+  toggle.disabled = !remoteUser;
+  toggle.setAttribute('aria-checked', String(autoTradeDuplicates));
+  toggle.querySelector('span').textContent = autoTradeDuplicates ? 'Activado' : 'Desactivado';
+  const cardById = new Map(allCatalogCards.map(card => [card.id, card]));
+  const tradeable = [...ownedCards.values()].filter(item => item.available_for_trade && cardById.has(item.card_id)).sort((first, second) => {
+    const firstCard = cardById.get(first.card_id);
+    const secondCard = cardById.get(second.card_id);
+    return (setDefinitions[firstCard.set_code]?.sortOrder || 0) - (setDefinitions[secondCard.set_code]?.sortOrder || 0) || Number(firstCard.card_number) - Number(secondCard.card_number) || first.variant_code.localeCompare(second.variant_code);
+  });
+  el('my-trade-summary').textContent = remoteUser ? `${tradeable.length} ${tradeable.length === 1 ? 'variante marcada' : 'variantes marcadas'} como disponible para intercambio.` : 'Inicia sesión para consultar tus cartas.';
+  el('my-trade-list').innerHTML = tradeable.map(item => {
+    const card = cardById.get(item.card_id);
+    const variant = variantsByCard.get(card.id)?.find(entry => entry.variant_code === item.variant_code);
+    return `<article class="my-trade-row"><img src="${escapeHTML(card.image_small_url)}" alt="${escapeHTML(card.name)}" loading="lazy" /><div class="my-trade-details"><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)} · ${escapeHTML(variant?.label || item.variant_code)}</small><span>${Number(item.quantity)} ${Number(item.quantity) === 1 ? 'copia en tu colección' : 'copias en tu colección'}</span></div><button type="button" class="my-trade-remove" data-remove-trade data-card-id="${escapeHTML(item.card_id)}" data-variant-code="${escapeHTML(item.variant_code)}" aria-label="Retirar ${escapeHTML(card.name)} ${escapeHTML(variant?.label || item.variant_code)} de intercambios">Retirar</button></article>`;
+  }).join('') || `<div class="my-trade-empty">${remoteUser ? 'Todavía no has marcado cartas para intercambio.' : 'Entra en tu cuenta para gestionar intercambios.'}</div>`;
+}
 const profileAvatar = profile => {
   const color = /^#[0-9a-f]{6}$/i.test(profile?.avatar_color || '') ? profile.avatar_color : '#ffd255';
   return `<div class="avatar" style="background:${color}">${escapeHTML(profile?.display_name?.trim().charAt(0).toUpperCase() || '?')}</div>`;
@@ -411,6 +431,36 @@ el('friend-profile-content').addEventListener('click', event => {
   }
 });
 el('back-to-friends').addEventListener('click', showFriendsOverview);
+el('auto-trade-duplicates').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  if (!remoteUser || button.disabled) return;
+  const next = !autoTradeDuplicates;
+  button.disabled = true;
+  try {
+    const { data, error } = await remote.setAutoTradeDuplicates(next);
+    if (error) throw error;
+    remoteUser = data.user;
+    autoTradeDuplicates = next;
+    if (next) {
+      const result = await remote.markDuplicateCardsTradeable(remoteUser.id);
+      if (result.error) throw result.error;
+      ownedCards.forEach((item, key) => {
+        if (Number(item.quantity) > 1) ownedCards.set(key, { ...item, available_for_trade: true });
+      });
+    }
+    renderCards();
+    showToast(next ? 'Repetidas actuales y futuras marcadas para intercambio.' : 'Automatización desactivada; tus marcas se conservan.');
+  } catch (error) {
+    showToast(`No se pudo actualizar: ${error.message}`, true);
+    renderTrades();
+  } finally {
+    button.disabled = false;
+  }
+});
+el('my-trade-list').addEventListener('click', event => {
+  const button = event.target.closest('[data-remove-trade]');
+  if (button) toggleTradeAvailability(button, false);
+});
 el('open-card-modal')?.addEventListener('click', () => el('card-modal').showModal());
 el('open-album-modal').addEventListener('click', () => el('album-modal').showModal());
 el('save-card')?.addEventListener('click', (event) => { const form = event.target.closest('form'); if (!form.checkValidity()) return; cards.unshift({ name: el('new-card-name').value, set: el('new-card-set').value, number: el('new-card-number').value, quantity: +el('new-card-quantity').value, rarity: el('new-card-rarity').value, icon: '✦', art: 'yellow' }); save(); renderCards(); form.reset(); });
@@ -440,7 +490,7 @@ async function toggleOwnedCard(variantButton) {
     console.error('No se pudo actualizar la colección:', error.message);
   }
 }
-async function toggleTradeAvailability(button) {
+async function toggleTradeAvailability(button, requestedValue = null) {
   if (!button || !remoteUser || button.disabled) return;
   const cardId = button.dataset.cardId;
   const variantCode = button.dataset.variantCode;
@@ -448,7 +498,8 @@ async function toggleTradeAvailability(button) {
   const owned = ownedCards.get(key);
   if (!owned) return;
   button.disabled = true;
-  const available = !owned.available_for_trade;
+  const available = requestedValue === null ? !owned.available_for_trade : requestedValue;
+  if (available === Boolean(owned.available_for_trade)) { button.disabled = false; return; }
   try {
     const { error } = await remote.updateTradeAvailability(remoteUser.id, cardId, variantCode, available);
     if (error) throw error;
@@ -477,9 +528,10 @@ async function adjustOwnedQuantity(quantityButton) {
       ownedCards.delete(ownershipKey);
       showToast('Variante eliminada de tu colección.');
     } else {
-      const { error } = await remote.updateOwnedQuantity(remoteUser.id, cardId, variantCode, nextQuantity);
+      const makeTradeable = autoTradeDuplicates && Number(owned.quantity) <= 1 && nextQuantity > 1;
+      const { error } = await remote.updateOwnedQuantity(remoteUser.id, cardId, variantCode, nextQuantity, makeTradeable);
       if (error) throw error;
-      ownedCards.set(ownershipKey, { ...owned, quantity: nextQuantity });
+      ownedCards.set(ownershipKey, { ...owned, quantity: nextQuantity, available_for_trade: makeTradeable || owned.available_for_trade });
     }
     renderCards();
   } catch (error) {
@@ -515,6 +567,7 @@ async function activateCloudSession() {
   catch (error) { applyIdentity(); renderCards(); showToast(`No se pudo comprobar la sesión: ${error.message}`, true); return; }
   if (!remoteUser) return;
   el('auth-button').textContent = 'Salir';
+  autoTradeDuplicates = remoteUser.user_metadata?.auto_trade_duplicates === true;
 
   try {
     const profile = await remote.loadProfile(remoteUser.id);
@@ -611,6 +664,7 @@ function clearCloudSession() {
   remoteUser = null;
   catalogCards = []; allCatalogCards = []; catalogEras = []; setDefinitions = {};
   variantsByCard = new Map(); ownedCards = new Map(); friendships = []; activeFriendProfile = null;
+  autoTradeDuplicates = false;
   albums = []; featuredCardIds = [];
   applyIdentity();
   el('available-sets-count').textContent = '0';

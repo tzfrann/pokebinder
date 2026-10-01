@@ -13,6 +13,7 @@ const publicFiles = [
   'quantity.css',
   'hero-showcase.css',
   'friends.css',
+  'trades.css',
   'app.js',
   'supabase-client.js',
   'manifest.webmanifest',

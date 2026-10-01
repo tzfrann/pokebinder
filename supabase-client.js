@@ -24,6 +24,9 @@ window.pokeBinderRemote = (() => {
     async setPassword(password) {
       return client.auth.updateUser({ password, data: { pokebinder_setup_complete: true } });
     },
+    async setAutoTradeDuplicates(enabled) {
+      return client.auth.updateUser({ data: { auto_trade_duplicates: enabled } });
+    },
     async updateProfile(userId, displayName) {
       return client.from('profiles').update({ display_name: displayName }).eq('id', userId);
     },
@@ -124,8 +127,11 @@ window.pokeBinderRemote = (() => {
     async removeOwnedCard(userId, cardId, variantCode) {
       return client.from('user_card_collection').delete().eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode);
     },
-    async updateOwnedQuantity(userId, cardId, variantCode, quantity) {
-      return client.from('user_card_collection').update({ quantity }).eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode);
+    async updateOwnedQuantity(userId, cardId, variantCode, quantity, makeTradeable = false) {
+      return client.from('user_card_collection').update(makeTradeable ? { quantity, available_for_trade: true } : { quantity }).eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode);
+    },
+    async markDuplicateCardsTradeable(userId) {
+      return client.from('user_card_collection').update({ available_for_trade: true }).eq('user_id', userId).gt('quantity', 1).eq('available_for_trade', false);
     },
     async updateTradeAvailability(userId, cardId, variantCode, available) {
       return client.from('user_card_collection').update({ available_for_trade: available }).eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode).select('card_id').single();

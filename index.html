@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="quantity.css" />
     <link rel="stylesheet" href="hero-showcase.css" />
     <link rel="stylesheet" href="friends.css" />
+    <link rel="stylesheet" href="trades.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -92,8 +93,10 @@
         </section>
 
         <section class="view" id="trades">
-          <div class="page-heading"><div><p class="eyebrow">INTERCAMBIOS</p><h1>Trades</h1><p>Encuentra la carta que te falta.</p></div><button class="primary-button">+ Publicar trade</button></div>
-          <div class="empty-state"><div>⇄</div><h2>Próximamente, tu mercado privado</h2><p>Aquí aparecerán las cartas que tus amigos venden, buscan o quieren intercambiar.</p><button class="secondary-button" data-view="amigos">Ver amigos</button></div>
+          <div class="page-heading"><div><p class="eyebrow">INTERCAMBIOS</p><h1>Trades</h1><p>Gestiona las cartas que tus amigos pueden ver para intercambiar.</p></div></div>
+          <div class="trade-settings"><div><h2>Añadir repetidas automáticamente</h2><p>Al activarlo, se marcan las repetidas que ya tienes y las nuevas. Al desactivarlo, ninguna marca existente se elimina.</p></div><button type="button" id="auto-trade-duplicates" class="trade-auto-toggle" role="switch" aria-checked="false" disabled><span>Desactivado</span><i aria-hidden="true"></i></button></div>
+          <div class="section-heading"><div><h2>Mis cartas disponibles</h2><p id="my-trade-summary">Inicia sesión para consultar tus cartas.</p></div></div>
+          <div id="my-trade-list" class="my-trade-list"></div>
         </section>
       </main>
     </div>
