@@ -383,6 +383,28 @@
   text-align: center;
 }
 
+.friend-trade-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 13px;
+}
+
+.friend-trade-filters button {
+  padding: 7px 11px;
+  border: 1px solid #cfe9dc;
+  border-radius: 99px;
+  color: #247655;
+  background: #fff;
+  font: 700 11px 'DM Sans';
+  cursor: pointer;
+}
+
+.friend-trade-filters button[aria-pressed="true"] {
+  background: #e7f7ef;
+  border-color: #87caa6;
+}
+
 .friend-trade-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));

@@ -127,6 +127,9 @@ window.pokeBinderRemote = (() => {
     async updateOwnedQuantity(userId, cardId, variantCode, quantity) {
       return client.from('user_card_collection').update({ quantity }).eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode);
     },
+    async updateTradeAvailability(userId, cardId, variantCode, available) {
+      return client.from('user_card_collection').update({ available_for_trade: available }).eq('user_id', userId).eq('card_id', cardId).eq('variant_code', variantCode).select('card_id').single();
+    },
     async replaceCards(userId, cards) {
       const { error: removeError } = await client.from('cards').delete().eq('user_id', userId);
       if (removeError) throw removeError;

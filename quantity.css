@@ -4,6 +4,30 @@
   gap: 7px;
 }
 
+.variant-entry {
+  display: grid;
+  gap: 5px;
+}
+
+.trade-availability {
+  justify-self: start;
+  padding: 4px 8px;
+  border: 1px solid #d7e5dd;
+  border-radius: 7px;
+  color: #577766;
+  background: #fff;
+  font: 700 10px 'DM Sans';
+  cursor: pointer;
+}
+
+.trade-availability.active {
+  border-color: #9ad5b4;
+  color: #247655;
+  background: #e7f7ef;
+}
+
+.trade-availability:disabled { opacity: .5; cursor: wait; }
+
 .variant-control .variant-toggle {
   flex: 1;
   min-width: 0;

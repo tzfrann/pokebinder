@@ -7,11 +7,11 @@ Fecha de revisión de esta guía: 1 de octubre de 2026. Describe el código del 
 - Acceso por cuenta de Supabase. El registro público está pensado para estar desactivado y los usuarios entran por invitación.
 - Catálogo en inglés organizado por era y set. El orden de las cartas es numérico.
 - Colección personal por **carta y variante** (`standard` o `reverse_holo`), con cantidad de 1 a 999. Una variante no marcada se considera ausente.
-- Dentro de cada set propio hay filtros combinables con búsqueda y rareza: todas, tengo, me faltan y repetidas. Los resultados se calculan por variante, por lo que una normal poseída no oculta una reverse pendiente. El número del botón «Repetidas» cuenta variantes con más de una copia; el resumen de la colección cuenta copias adicionales.
+- Dentro de cada set propio hay filtros combinables con búsqueda y rareza: todas, tengo, me faltan, repetidas y para intercambiar. Los resultados se calculan por variante, por lo que una normal poseída no oculta una reverse pendiente. El número del botón «Repetidas» cuenta variantes con más de una copia; el resumen de la colección cuenta copias adicionales.
 - Progreso por cartas distintas y por todas las variantes. El progreso incluye las cartas secretas cuando las hay; el número impreso de la carta mantiene el denominador oficial del set.
 - Escaparate de hasta tres cartas poseídas.
 - Búsqueda de perfiles, solicitudes de amistad y aceptación o rechazo. Los amigos pueden ver el perfil, progreso y detalle de cada set de otro usuario.
-- «Repetidas que no tengo» en el perfil de un amigo: compara la **misma carta y variante**. Aparece cuando el amigo tiene al menos dos copias y el usuario actual ninguna. Muestra `cantidad − 1` como copias potencialmente disponibles.
+- Cada variante poseída se puede marcar o desmarcar como «Disponible para intercambio», incluso si solo hay una copia. Los amigos ven todas las variantes marcadas en su perfil y pueden filtrar las que les faltan. El detalle de cada set también muestra la disponibilidad.
 - Álbumes con nombre, descripción, estilo y visibilidad `private` o `friends`.
 - PWA instalable. El service worker guarda los archivos de la aplicación; las imágenes y los datos de Supabase dependen de la conexión.
 
@@ -36,6 +36,5 @@ Los sets visibles en la web salen de `card_sets`, no de esta tabla. Si no aparec
 - Los álbumes todavía **no permiten escoger ni ordenar cartas**. La tabla `album_cards` existe, pero la interfaz actual solo guarda la cabecera del álbum. «Ver álbum» todavía no abre un contenido real.
 - La sincronización actual de álbumes borra y reinserta sus filas, cambiando los IDs. Hay que corregirla antes de añadir cartas persistentes a cada álbum.
 - La sección **Trades** es una maqueta; no publica anuncios. La tabla `trade_posts` existe, pero el frontend no la utiliza.
-- El campo `available_for_trade` existe en la colección, pero la coincidencia «Repetidas que no tengo» se basa por ahora solo en `quantity > 1`. No expresa consentimiento del amigo para intercambiar esa copia.
 - Faltan los filtros equivalentes dentro de los sets de amigos.
 - El catálogo no se administra desde la web: cada set nuevo requiere preparar y ejecutar un SQL.

@@ -30,8 +30,8 @@ La clave publishable de `supabase/config.js` no concede poderes de administraci�
 - **Set completo:** número de IDs de carta diferentes poseídos / número real de cartas importadas, incluidas las secretas.
 - **Todas las variantes:** filas poseídas de `user_card_collection` / filas disponibles de `card_variants` para ese set. Las copias adicionales no aumentan este progreso.
 - **Copias:** suma de `quantity` de las variantes poseídas.
-- **Repetidas que no tengo:** para cada `(card_id, variant_code)`, el amigo tiene `quantity > 1` y el usuario actual no posee la variante. Se muestran `quantity − 1` copias.
-- **Filtros de mi set:** las pestañas filtran variantes, no solo IDs de carta. «Tengo» requiere una fila propia; «Me faltan» requiere ausencia de esa fila; «Repetidas» requiere `quantity > 1`. Una carta se muestra si al menos una variante coincide y solo aparecen los controles de las variantes coincidentes. Búsqueda y rareza se aplican antes de calcular los contadores de las pestañas.
+- **Disponibles para intercambio:** cada fila propia de `user_card_collection` tiene `available_for_trade`. El dueño lo marca expresamente, sin mínimo de copias. El perfil del amigo muestra todas las variantes marcadas; «Me faltan» compara la misma pareja `(card_id, variant_code)` con la colección del usuario actual. No se afirma cuántas copias quiere entregar.
+- **Filtros de mi set:** las pestañas filtran variantes, no solo IDs de carta. «Tengo» requiere una fila propia; «Me faltan» requiere ausencia de esa fila; «Repetidas» requiere `quantity > 1`; «Para intercambiar» requiere `available_for_trade = true`. Una carta se muestra si al menos una variante coincide y solo aparecen los controles de las variantes coincidentes. Búsqueda y rareza se aplican antes de calcular los contadores de las pestañas.
 
 `supabase-client.js` consulta variantes en lotes de 100 IDs y pagina las colecciones de 500 filas para evitar el límite de resultados de Supabase al añadir más sets.
 

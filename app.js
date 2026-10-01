@@ -15,6 +15,7 @@ let setDefinitions = {};
 let catalogEras = [];
 let friendships = [];
 let activeFriendProfile = null;
+let friendTradeFilter = 'all';
 let featuredCardIds = JSON.parse(localStorage.getItem('pokebinder-featured-cards') || '[]').slice(0, 3);
 function applyIdentity(name = null) {
   const displayName = name || 'Sin sesión';
@@ -59,17 +60,19 @@ function renderCards() {
     const owned = ownedCards.get(`${card.id}:${variant.variant_code}`);
     if (state === 'owned') return Boolean(owned);
     if (state === 'missing') return !owned;
+    if (state === 'tradeable') return Boolean(owned?.available_for_trade);
     return Number(owned?.quantity || 0) > 1;
   };
-  const variantCounts = { all: 0, owned: 0, missing: 0, duplicates: 0 };
+  const variantCounts = { all: 0, owned: 0, missing: 0, duplicates: 0, tradeable: 0 };
   matchingCards.forEach(card => {
     (variantsByCard.get(card.id) || []).forEach(variant => {
       variantCounts.all += 1;
       variantCounts[isOwned(card, variant) ? 'owned' : 'missing'] += 1;
       if (Number(ownedCards.get(`${card.id}:${variant.variant_code}`)?.quantity || 0) > 1) variantCounts.duplicates += 1;
+      if (ownedCards.get(`${card.id}:${variant.variant_code}`)?.available_for_trade) variantCounts.tradeable += 1;
     });
   });
-  const stateLabels = { all: 'Todas', owned: 'Tengo', missing: 'Me faltan', duplicates: 'Repetidas' };
+  const stateLabels = { all: 'Todas', owned: 'Tengo', missing: 'Me faltan', duplicates: 'Repetidas', tradeable: 'Para intercambiar' };
   el('collection-state-filters').innerHTML = Object.entries(stateLabels).map(([state, label]) => `<button type="button" class="collection-state-filter ${collectionStateFilter === state ? 'active' : ''}" data-collection-state="${state}" aria-pressed="${collectionStateFilter === state}" ${catalogCards.length ? '' : 'disabled'}>${label} <span>${variantCounts[state]}</span></button>`).join('');
   const filtered = matchingCards.map(card => ({ card, variants: (variantsByCard.get(card.id) || []).filter(variant => matchesState(card, variant, collectionStateFilter)) })).filter(entry => collectionStateFilter === 'all' || entry.variants.length);
   const shownVariants = filtered.reduce((total, entry) => total + entry.variants.length, 0);
@@ -80,7 +83,8 @@ function renderCards() {
       const variantButtons = visibleVariants.map(variant => {
         const owned = ownedCards.get(`${c.id}:${variant.variant_code}`);
         const quantityControls = owned ? `<div class="quantity-stepper"><button type="button" data-quantity-action="decrease" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-label="Quitar una copia">−</button><strong aria-label="${owned.quantity} copias">×${owned.quantity}</strong><button type="button" data-quantity-action="increase" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-label="Añadir otra copia" ${Number(owned.quantity) >= 999 ? 'disabled' : ''}>+</button></div>` : '';
-        return `<div class="variant-control"><button class="variant-toggle ${owned ? 'owned' : ''}" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-pressed="${Boolean(owned)}" ${variantMigrationReady ? '' : 'disabled'}><span class="check">${owned ? '✓' : ''}</span><span>${variant.label}</span></button>${quantityControls}</div>`;
+        const tradeControl = owned ? `<button type="button" class="trade-availability ${owned.available_for_trade ? 'active' : ''}" data-trade-toggle data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-pressed="${Boolean(owned.available_for_trade)}">${owned.available_for_trade ? '✓ Disponible para intercambio' : 'Marcar para intercambio'}</button>` : '';
+        return `<div class="variant-entry"><div class="variant-control"><button class="variant-toggle ${owned ? 'owned' : ''}" data-card-id="${c.id}" data-variant-code="${variant.variant_code}" aria-pressed="${Boolean(owned)}" ${variantMigrationReady ? '' : 'disabled'}><span class="check">${owned ? '✓' : ''}</span><span>${variant.label}</span></button>${quantityControls}</div>${tradeControl}</div>`;
       }).join('');
       return `<article class="pokemon-card catalog-card ${ownedVariantCount ? 'owned-card' : ''}"><div class="card-art catalog-art"><img src="${c.image_small_url}" alt="${c.name}" loading="lazy" /></div><div class="card-info"><div class="card-name"><strong>${c.name}</strong><span>${c.card_number}/${setDefinition.printedTotal || setDefinition.cards}</span></div><p class="card-meta"><span>${c.set_name}</span><span>${c.rarity || 'Unknown'}</span></p><div class="variant-list">${variantButtons}</div></div></article>`;
     }
@@ -228,6 +232,7 @@ function showFriendsOverview() {
   el('friend-profile').hidden = true;
 }
 async function openFriendProfile(userId) {
+  friendTradeFilter = 'all';
   el('friends-overview').hidden = true;
   el('friend-profile').hidden = false;
   el('friend-profile-content').innerHTML = '<div class="friends-empty">Cargando perfil…</div>';
@@ -267,22 +272,24 @@ function renderFriendProfile() {
     }).join('');
     const albumMarkup = sharedAlbums.map(album => `<article class="friend-shared-album"><div class="album-cover ${album.cover_style === 'teal' ? 'alt' : album.cover_style === 'gold' ? 'gold' : ''}"><b>${escapeHTML(album.title)}</b><span>Álbum compartido</span></div><div><strong>${escapeHTML(album.title)}</strong><p>${escapeHTML(album.description || 'Sin descripción.')}</p></div></article>`).join('') || '<div class="friends-empty">No ha compartido ningún álbum.</div>';
     const cardById = new Map(allCatalogCards.map(card => [card.id, card]));
-    const tradeCandidates = collection.filter(item => Number(item.quantity) > 1 && !ownedCards.has(`${item.card_id}:${item.variant_code}`)).sort((first, second) => {
+    const tradeCandidates = collection.filter(item => item.available_for_trade).sort((first, second) => {
       const firstCard = cardById.get(first.card_id);
       const secondCard = cardById.get(second.card_id);
       return (setDefinitions[firstCard?.set_code]?.sortOrder || 0) - (setDefinitions[secondCard?.set_code]?.sortOrder || 0) || Number(firstCard?.card_number || 0) - Number(secondCard?.card_number || 0);
     });
-    const tradeMarkup = tradeCandidates.map(item => {
+    const missingTrades = tradeCandidates.filter(item => !ownedCards.has(`${item.card_id}:${item.variant_code}`)).length;
+    const visibleTrades = friendTradeFilter === 'missing' ? tradeCandidates.filter(item => !ownedCards.has(`${item.card_id}:${item.variant_code}`)) : tradeCandidates;
+    const tradeMarkup = visibleTrades.map(item => {
       const card = cardById.get(item.card_id);
       if (!card) return '';
       const variant = variantsByCard.get(card.id)?.find(entry => entry.variant_code === item.variant_code);
-      const spareCopies = Number(item.quantity) - 1;
-      return `<button class="friend-trade-card" data-open-friend-set="${escapeHTML(card.set_code)}"><img src="${card.image_small_url}" alt="${escapeHTML(card.name)}" loading="lazy" /><div><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)}</small><span>${escapeHTML(variant?.label || item.variant_code)}</span><b>${spareCopies} ${spareCopies === 1 ? 'copia disponible' : 'copias disponibles'} · Ver set →</b></div></button>`;
-    }).join('') || '<div class="friends-empty">Ahora mismo no tiene repetidas que te falten.</div>';
+      const missing = !ownedCards.has(`${item.card_id}:${item.variant_code}`);
+      return `<button class="friend-trade-card" data-open-friend-set="${escapeHTML(card.set_code)}"><img src="${card.image_small_url}" alt="${escapeHTML(card.name)}" loading="lazy" /><div><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)}</small><span>${escapeHTML(variant?.label || item.variant_code)} · ${missing ? 'Te falta' : 'Ya la tienes'}</span><b>Disponible para intercambio · Ver set →</b></div></button>`;
+    }).join('') || `<div class="friends-empty">${friendTradeFilter === 'missing' ? 'No hay cartas disponibles que te falten.' : 'Todavía no ha marcado cartas para intercambio.'}</div>`;
     const totalCopies = collection.reduce((sum, item) => sum + Number(item.quantity), 0);
     const startedSets = Object.keys(setDefinitions).filter(setCode => collection.some(item => item.card_id.startsWith(`${setCode}-`))).length;
     const safeColor = /^#[0-9a-f]{6}$/i.test(profile.avatar_color || '') ? profile.avatar_color : '#ffd255';
-    el('friend-profile-content').innerHTML = `<header class="friend-profile-header"><div class="avatar large" style="background:${safeColor}">${escapeHTML(profile.display_name.trim().charAt(0).toUpperCase())}</div><div><p class="eyebrow">PERFIL DE ENTRENADOR</p><h1>${escapeHTML(profile.display_name)}</h1><p>${totalCopies} copias · ${groupedCollection.size} cartas distintas · ${startedSets} sets iniciados</p></div></header><section class="friend-profile-section"><div class="section-heading"><div><h2>Escaparate</h2><p>Sus cartas destacadas.</p></div></div><div class="friend-featured-grid">${featuredMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Repetidas que no tengo</h2><p>Posibles intercambios: le sobra esa variante y a ti te falta.</p></div><span class="friend-trade-count">${tradeCandidates.length}</span></div><div class="friend-trade-grid">${tradeMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Sets</h2><p>Pulsa en uno para ver qué cartas tiene y cuáles le faltan.</p></div></div><div class="friend-progress-grid">${progressMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Colección</h2><p>Álbumes que ha compartido con sus amigos.</p></div></div><div class="friend-album-grid">${albumMarkup}</div></section>`;
+    el('friend-profile-content').innerHTML = `<header class="friend-profile-header"><div class="avatar large" style="background:${safeColor}">${escapeHTML(profile.display_name.trim().charAt(0).toUpperCase())}</div><div><p class="eyebrow">PERFIL DE ENTRENADOR</p><h1>${escapeHTML(profile.display_name)}</h1><p>${totalCopies} copias · ${groupedCollection.size} cartas distintas · ${startedSets} sets iniciados</p></div></header><section class="friend-profile-section"><div class="section-heading"><div><h2>Escaparate</h2><p>Sus cartas destacadas.</p></div></div><div class="friend-featured-grid">${featuredMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Disponibles para intercambio</h2><p>Variantes que ha marcado expresamente, tenga una o varias copias.</p></div><span class="friend-trade-count">${tradeCandidates.length}</span></div><div class="friend-trade-filters"><button type="button" data-friend-trade-filter="all" aria-pressed="${friendTradeFilter === 'all'}">Todas (${tradeCandidates.length})</button><button type="button" data-friend-trade-filter="missing" aria-pressed="${friendTradeFilter === 'missing'}">Me faltan (${missingTrades})</button></div><div class="friend-trade-grid">${tradeMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Sets</h2><p>Pulsa en uno para ver qué cartas tiene y cuáles le faltan.</p></div></div><div class="friend-progress-grid">${progressMarkup}</div></section><section class="friend-profile-section"><div class="section-heading"><div><h2>Colección</h2><p>Álbumes que ha compartido con sus amigos.</p></div></div><div class="friend-album-grid">${albumMarkup}</div></section>`;
 }
 function renderFriendSetDetail(setCode) {
   if (!activeFriendProfile || !setDefinitions[setCode]) return;
@@ -300,8 +307,9 @@ function renderFriendSetDetail(setCode) {
     const availableVariants = variantsByCard.get(card.id) || [];
     const variantMarkup = availableVariants.map(variant => {
       const owned = ownedVariants.find(item => item.variant_code === variant.variant_code);
-      const availableTrade = owned && Number(owned.quantity) > 1 && !ownedCards.has(`${card.id}:${variant.variant_code}`);
-      return `<span class="friend-variant-state ${owned ? 'owned' : 'missing'} ${availableTrade ? 'trade-match' : ''}"><i>${owned ? '✓' : '×'}</i>${escapeHTML(variant.label)}${owned ? ` · ${owned.quantity} ${Number(owned.quantity) === 1 ? 'copia' : 'copias'}` : ''}${availableTrade ? '<b>Te falta y le sobra</b>' : ''}</span>`;
+      const availableTrade = Boolean(owned?.available_for_trade);
+      const missingToMe = !ownedCards.has(`${card.id}:${variant.variant_code}`);
+      return `<span class="friend-variant-state ${owned ? 'owned' : 'missing'} ${availableTrade ? 'trade-match' : ''}"><i>${owned ? '✓' : '×'}</i>${escapeHTML(variant.label)}${owned ? ` · ${owned.quantity} ${Number(owned.quantity) === 1 ? 'copia' : 'copias'}` : ''}${availableTrade ? `<b>Disponible para intercambio${missingToMe ? ' · Te falta' : ''}</b>` : ''}</span>`;
     }).join('');
     return `<article class="friend-set-card ${ownedVariants.length ? 'owned' : 'missing'}"><div class="friend-card-image"><img src="${card.image_small_url}" alt="${escapeHTML(card.name)}" loading="lazy" /><span>${ownedVariants.length ? 'La tiene' : 'Le falta'}</span></div><div><strong>${escapeHTML(card.name)}</strong><small>#${escapeHTML(card.card_number)} · ${escapeHTML(card.rarity || 'Unknown')}</small><div class="friend-card-variants">${variantMarkup}</div></div></article>`;
   }).join('');
@@ -393,6 +401,8 @@ el('friends-list').addEventListener('click', event => {
   if (button) openFriendProfile(button.dataset.viewFriend);
 });
 el('friend-profile-content').addEventListener('click', event => {
+  const tradeFilterButton = event.target.closest('[data-friend-trade-filter]');
+  if (tradeFilterButton) { friendTradeFilter = tradeFilterButton.dataset.friendTradeFilter; renderFriendProfile(); return; }
   const setButton = event.target.closest('[data-open-friend-set]');
   if (setButton) renderFriendSetDetail(setButton.dataset.openFriendSet);
   if (event.target.closest('[data-back-friend-profile]')) {
@@ -420,7 +430,7 @@ async function toggleOwnedCard(variantButton) {
     } else {
       const { error } = await remote.setCardOwned(remoteUser.id, cardId, variantCode);
       if (error) throw error;
-      ownedCards.set(ownershipKey, { card_id: cardId, variant_code: variantCode, quantity: 1 });
+      ownedCards.set(ownershipKey, { card_id: cardId, variant_code: variantCode, quantity: 1, available_for_trade: false });
       showToast('Variante añadida a tu colección.');
     }
     renderCards();
@@ -428,6 +438,26 @@ async function toggleOwnedCard(variantButton) {
     variantButton.disabled = false;
     showToast(`No se pudo guardar: ${error.message}`, true);
     console.error('No se pudo actualizar la colección:', error.message);
+  }
+}
+async function toggleTradeAvailability(button) {
+  if (!button || !remoteUser || button.disabled) return;
+  const cardId = button.dataset.cardId;
+  const variantCode = button.dataset.variantCode;
+  const key = `${cardId}:${variantCode}`;
+  const owned = ownedCards.get(key);
+  if (!owned) return;
+  button.disabled = true;
+  const available = !owned.available_for_trade;
+  try {
+    const { error } = await remote.updateTradeAvailability(remoteUser.id, cardId, variantCode, available);
+    if (error) throw error;
+    ownedCards.set(key, { ...owned, available_for_trade: available });
+    renderCards();
+    showToast(available ? 'Tus amigos ya pueden ver esta variante para intercambio.' : 'Variante retirada de los intercambios.');
+  } catch (error) {
+    button.disabled = false;
+    showToast(`No se pudo guardar: ${error.message}`, true);
   }
 }
 async function adjustOwnedQuantity(quantityButton) {
@@ -458,6 +488,8 @@ async function adjustOwnedQuantity(quantityButton) {
   }
 }
 el('card-grid').addEventListener('click', event => {
+  const tradeButton = event.target.closest('[data-trade-toggle]');
+  if (tradeButton) { toggleTradeAvailability(tradeButton); return; }
   const quantityButton = event.target.closest('[data-quantity-action]');
   if (quantityButton) { adjustOwnedQuantity(quantityButton); return; }
   toggleOwnedCard(event.target.closest('.variant-toggle'));
