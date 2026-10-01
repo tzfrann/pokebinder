@@ -16,6 +16,9 @@
 .trades-panel .section-heading { margin-top: 0; }
 .trade-inline-action { padding: 8px 12px; border: 1px solid #f5b0b5; border-radius: 8px; background: #fff; color: var(--red); font: 700 12px 'DM Sans'; cursor: pointer; }
 .trade-post-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 13px; }
+.trade-feed-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 17px; }
+.trade-feed-filters button { padding: 8px 11px; border: 1px solid #dfe5e9; border-radius: 99px; background: #fff; color: #566570; font: 700 11px 'DM Sans'; cursor: pointer; }
+.trade-feed-filters button[aria-pressed="true"] { border-color: #9ad5b4; background: #e7f7ef; color: #247655; }
 .trade-post-list > .my-trade-empty { grid-column: 1 / -1; }
 .trade-post { display: flex; flex-direction: column; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
 .trade-post-top, .trade-post-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -23,6 +26,12 @@
 .trade-post-kind.want { background: #edf3fd; color: #356db0; }
 .trade-post-kind.sell { background: #fff3d9; color: #9c700c; }
 .trade-post-price { font-size: 14px; }
+.trade-post-card { display: flex; align-items: center; gap: 12px; margin: 14px 0 2px; padding: 10px; border: 1px solid #e7ecf0; border-radius: 9px; background: #fbfcfd; }
+.trade-post-card img { flex: 0 0 auto; width: 58px; height: 78px; object-fit: contain; }
+.trade-post-card strong, .trade-post-card small, .trade-post-card span { display: block; }
+.trade-post-card strong { font: 600 15px Fredoka; }
+.trade-post-card small { margin: 3px 0 6px; color: var(--muted); font-size: 10px; }
+.trade-post-card span { color: #247655; font-size: 10px; font-weight: 700; }
 .trade-post h3 { margin: 13px 0 5px; font: 600 20px Fredoka; overflow-wrap: anywhere; }
 .trade-post p { flex: 1; margin: 0 0 19px; color: #5b6873; font-size: 12px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
 .trade-post-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
@@ -32,6 +41,25 @@
 .trade-post-form label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
 .trade-post-form input, .trade-post-form select, .trade-post-form textarea { width: 100%; padding: 10px; border: 1px solid #dfe5e9; border-radius: 8px; background: #fff; color: var(--ink); font: 13px 'DM Sans'; }
 .trade-post-form textarea { resize: vertical; }
+.trade-card-picker { display: grid; gap: 7px; }
+.trade-card-picker > label { font-size: 12px; font-weight: 700; }
+.trade-card-results { display: grid; gap: 5px; max-height: 275px; overflow-y: auto; }
+.trade-card-results:empty { display: none; }
+.trade-card-results p { margin: 3px 0; color: var(--muted); font-size: 11px; }
+.trade-card-results button { display: flex; align-items: center; gap: 9px; padding: 6px 9px; border: 1px solid #e8edf0; border-radius: 8px; background: #fff; text-align: left; cursor: pointer; }
+.trade-card-results button:hover { border-color: #f5b0b5; background: #fffafa; }
+.trade-card-results img { width: 35px; height: 48px; object-fit: contain; }
+.trade-card-results strong, .trade-card-results small { display: block; }
+.trade-card-results strong { font: 600 14px Fredoka; }
+.trade-card-results small { color: var(--muted); font-size: 10px; }
+.trade-selected-card { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #9ad5b4; border-radius: 10px; background: #f3fbf7; }
+.trade-selected-card > img { width: 65px; height: 90px; object-fit: contain; }
+.trade-selected-card > div { flex: 1; min-width: 0; }
+.trade-selected-card strong, .trade-selected-card small { display: block; }
+.trade-selected-card strong { font: 600 17px Fredoka; }
+.trade-selected-card small { margin: 3px 0 8px; color: var(--muted); font-size: 10px; }
+.trade-selected-card label { margin-bottom: 4px; }
+.trade-selected-card > button { align-self: flex-start; border: 0; background: transparent; color: #6a767e; font-size: 22px; cursor: pointer; }
 .trade-form-actions { display: flex; align-items: center; gap: 9px; }
 .trade-form-actions .primary-button { background: var(--red); color: #fff; }
 .trade-form-actions .secondary-button { margin: 0; }

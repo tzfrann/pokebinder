@@ -139,15 +139,24 @@ window.pokeBinderRemote = (() => {
     async loadActiveTradePosts() {
       const pageSize = 200;
       const rows = [];
+      let migrationReady = true;
       for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await client.from('trade_posts')
-          .select('id, user_id, kind, title, description, price_cents, created_at, author:profiles!trade_posts_user_id_fkey(display_name)')
+        let { data, error } = await client.from('trade_posts')
+          .select('id, user_id, kind, title, description, price_cents, card_id, variant_code, created_at, author:profiles!trade_posts_user_id_fkey(display_name)')
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .range(offset, offset + pageSize - 1);
+        if (error && ['42703', 'PGRST204'].includes(error.code)) {
+          migrationReady = false;
+          ({ data, error } = await client.from('trade_posts')
+            .select('id, user_id, kind, title, description, price_cents, created_at, author:profiles!trade_posts_user_id_fkey(display_name)')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .range(offset, offset + pageSize - 1));
+        }
         if (error) throw error;
         rows.push(...data);
-        if (data.length < pageSize) return rows;
+        if (data.length < pageSize) return { posts: rows, migrationReady };
       }
     },
     async createTradePost(userId, post) {

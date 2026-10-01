@@ -19,6 +19,10 @@ let friendTradeFilter = 'all';
 let autoTradeDuplicates = false;
 let activeTradePosts = [];
 let tradeLoadRequest = 0;
+let tradeFeedFilter = 'all';
+let selectedTradeCardId = null;
+let selectedTradeVariantCode = null;
+let tradeCardMigrationReady = true;
 let featuredCardIds = JSON.parse(localStorage.getItem('pokebinder-featured-cards') || '[]').slice(0, 3);
 function applyIdentity(name = null) {
   const displayName = name || 'Sin sesión';
@@ -204,23 +208,48 @@ function renderTrades() {
 }
 function renderTradePosts() {
   const labels = { trade: 'Intercambio', want: 'Busco', sell: 'Venta' };
-  el('trade-post-list').innerHTML = activeTradePosts.map(post => {
+  const cardById = new Map(allCatalogCards.map(card => [card.id, card]));
+  const matches = activeTradePosts.filter(post => {
+    if (tradeFeedFilter === 'all') return true;
+    if (post.kind !== 'want' || post.user_id === remoteUser?.id || !post.card_id || !post.variant_code) return false;
+    const owned = ownedCards.get(`${post.card_id}:${post.variant_code}`);
+    return tradeFeedFilter === 'owned' ? Boolean(owned) : Boolean(owned?.available_for_trade);
+  });
+  document.querySelectorAll('#trade-feed-filters button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.tradeFeedFilter === tradeFeedFilter)));
+  el('trade-post-list').innerHTML = matches.map(post => {
     const mine = post.user_id === remoteUser?.id;
     const author = Array.isArray(post.author) ? post.author[0] : post.author;
+    const card = cardById.get(post.card_id);
+    const variant = variantsByCard.get(post.card_id)?.find(item => item.variant_code === post.variant_code);
     const date = new Date(post.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     const price = post.kind === 'sell' && post.price_cents !== null ? `<strong class="trade-post-price">${(post.price_cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</strong>` : '';
-    return `<article class="trade-post"><div class="trade-post-top"><span class="trade-post-kind ${escapeHTML(post.kind)}">${labels[post.kind] || 'Trade'}</span>${price}</div><h3>${escapeHTML(post.title)}</h3>${post.description ? `<p>${escapeHTML(post.description)}</p>` : ''}<div class="trade-post-footer"><span>${escapeHTML(author?.display_name || 'Entrenador')} · ${escapeHTML(date)}</span>${mine ? `<button type="button" data-close-trade="${escapeHTML(post.id)}">Cerrar anuncio</button>` : ''}</div></article>`;
-  }).join('') || `<div class="my-trade-empty">${remoteUser ? 'No hay trades activos en tu círculo. Puedes publicar el primero.' : 'Inicia sesión para ver los trades de tus amigos.'}</div>`;
+    const cardMarkup = card ? `<div class="trade-post-card"><img src="${escapeHTML(card.image_small_url)}" alt="${escapeHTML(card.name)}" loading="lazy" /><div><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)}</small><span>${escapeHTML(variant?.label || post.variant_code)}</span></div></div>` : '';
+    return `<article class="trade-post"><div class="trade-post-top"><span class="trade-post-kind ${escapeHTML(post.kind)}">${labels[post.kind] || 'Trade'}</span>${price}</div>${cardMarkup}<h3>${escapeHTML(post.title)}</h3>${post.description ? `<p>${escapeHTML(post.description)}</p>` : ''}<div class="trade-post-footer"><span>${escapeHTML(author?.display_name || 'Entrenador')} · ${escapeHTML(date)}</span>${mine ? `<button type="button" data-close-trade="${escapeHTML(post.id)}">Cerrar anuncio</button>` : ''}</div></article>`;
+  }).join('') || `<div class="my-trade-empty">${!remoteUser ? 'Inicia sesión para ver los trades de tus amigos.' : tradeFeedFilter !== 'all' ? 'Nadie de tus amigos busca una variante que coincida con este filtro.' : 'No hay trades activos en tu círculo. Puedes publicar el primero.'}</div>`;
+}
+function renderTradeCardSearch() {
+  const query = el('trade-card-search').value.trim().toLocaleLowerCase();
+  if (query.length < 2) { el('trade-card-results').innerHTML = '<p>Escribe al menos dos caracteres para buscar en el catálogo.</p>'; return; }
+  const matches = allCatalogCards.filter(card => `${card.name} ${card.set_name} ${card.card_number}`.toLocaleLowerCase().includes(query)).slice(0, 30);
+  el('trade-card-results').innerHTML = matches.map(card => `<button type="button" data-select-trade-card="${escapeHTML(card.id)}"><img src="${escapeHTML(card.image_small_url)}" alt="" loading="lazy" /><span><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)}</small></span></button>`).join('') || '<p>No hay cartas que coincidan.</p>';
+}
+function renderSelectedTradeCard() {
+  const card = allCatalogCards.find(item => item.id === selectedTradeCardId);
+  if (!card) { el('trade-selected-card').innerHTML = ''; return; }
+  const variants = variantsByCard.get(card.id) || [];
+  el('trade-selected-card').innerHTML = `<div class="trade-selected-card"><img src="${escapeHTML(card.image_small_url)}" alt="${escapeHTML(card.name)}" /><div><strong>${escapeHTML(card.name)}</strong><small>${escapeHTML(card.set_name)} · #${escapeHTML(card.card_number)}</small><label for="trade-selected-variant">Variante</label><select id="trade-selected-variant">${variants.map(variant => `<option value="${escapeHTML(variant.variant_code)}" ${variant.variant_code === selectedTradeVariantCode ? 'selected' : ''}>${escapeHTML(variant.label)}</option>`).join('')}</select></div><button type="button" data-clear-trade-card aria-label="Quitar carta seleccionada">×</button></div>`;
 }
 async function loadTradePosts() {
   const request = ++tradeLoadRequest;
   if (!remoteUser) { activeTradePosts = []; renderTradePosts(); return; }
   el('trade-post-list').innerHTML = '<div class="my-trade-empty">Cargando trades…</div>';
   try {
-    const posts = await remote.loadActiveTradePosts();
+    const { posts, migrationReady } = await remote.loadActiveTradePosts();
     if (request !== tradeLoadRequest) return;
     activeTradePosts = posts;
+    tradeCardMigrationReady = migrationReady;
     renderTradePosts();
+    if (!migrationReady) showToast('Falta aplicar la migración de cartas en Trades para publicar anuncios nuevos.', true);
   } catch (error) {
     if (request !== tradeLoadRequest) return;
     el('trade-post-list').innerHTML = `<div class="my-trade-empty">No se pudieron cargar los trades: ${escapeHTML(error.message)}</div>`;
@@ -234,6 +263,7 @@ function showTradesPanel(panel) {
     else button.removeAttribute('aria-current');
   });
   if (panel === 'feed') loadTradePosts();
+  if (panel === 'create') renderTradeCardSearch();
   if (panel === 'available') renderTrades();
 }
 const profileAvatar = profile => {
@@ -469,6 +499,20 @@ el('friend-profile-content').addEventListener('click', event => {
 });
 el('back-to-friends').addEventListener('click', showFriendsOverview);
 el('trades').addEventListener('click', event => {
+  const feedFilterButton = event.target.closest('[data-trade-feed-filter]');
+  if (feedFilterButton) { tradeFeedFilter = feedFilterButton.dataset.tradeFeedFilter; renderTradePosts(); return; }
+  const cardButton = event.target.closest('[data-select-trade-card]');
+  if (cardButton) {
+    selectedTradeCardId = cardButton.dataset.selectTradeCard;
+    selectedTradeVariantCode = variantsByCard.get(selectedTradeCardId)?.[0]?.variant_code || null;
+    renderSelectedTradeCard();
+    el('trade-card-results').innerHTML = '';
+    return;
+  }
+  if (event.target.closest('[data-clear-trade-card]')) {
+    selectedTradeCardId = null; selectedTradeVariantCode = null;
+    renderSelectedTradeCard(); renderTradeCardSearch(); return;
+  }
   const panelButton = event.target.closest('[data-trades-panel]');
   if (panelButton) { showTradesPanel(panelButton.dataset.tradesPanel); return; }
   const closeButton = event.target.closest('[data-close-trade]');
@@ -486,6 +530,10 @@ el('trades').addEventListener('click', event => {
     }
   })();
 });
+el('trade-card-search').addEventListener('input', renderTradeCardSearch);
+el('trade-selected-card').addEventListener('change', event => {
+  if (event.target.id === 'trade-selected-variant') selectedTradeVariantCode = event.target.value;
+});
 el('trade-post-kind').addEventListener('change', event => {
   const selling = event.target.value === 'sell';
   el('trade-price-field').hidden = !selling;
@@ -502,13 +550,21 @@ el('trade-post-form').addEventListener('submit', async event => {
   const description = el('trade-post-description').value.trim();
   const priceInput = el('trade-post-price').value;
   if (title.length < 3) { showToast('El título necesita al menos tres caracteres.', true); return; }
+  if (!selectedTradeCardId || !selectedTradeVariantCode || !variantsByCard.get(selectedTradeCardId)?.some(variant => variant.variant_code === selectedTradeVariantCode)) {
+    showToast('Selecciona una carta y su variante del catálogo.', true); return;
+  }
+  if (!tradeCardMigrationReady) { showToast('Primero hay que aplicar la migración de cartas en Trades en Supabase.', true); return; }
   const priceCents = kind === 'sell' && priceInput !== '' ? Math.round(Number(priceInput) * 100) : null;
   button.disabled = true;
   try {
-    const { error } = await remote.createTradePost(remoteUser.id, { kind, title, description: description || null, price_cents: priceCents });
+    const { error } = await remote.createTradePost(remoteUser.id, { kind, title, description: description || null, price_cents: priceCents, card_id: selectedTradeCardId, variant_code: selectedTradeVariantCode });
     if (error) throw error;
     form.reset();
+    selectedTradeCardId = null; selectedTradeVariantCode = null;
+    renderSelectedTradeCard();
+    el('trade-card-search').value = '';
     el('trade-price-field').hidden = true;
+    tradeFeedFilter = 'all';
     showTradesPanel('feed');
     showToast('Trade publicado para tus amigos.');
   } catch (error) {
@@ -752,6 +808,7 @@ function clearCloudSession() {
   variantsByCard = new Map(); ownedCards = new Map(); friendships = []; activeFriendProfile = null;
   autoTradeDuplicates = false;
   activeTradePosts = []; tradeLoadRequest += 1;
+  tradeFeedFilter = 'all'; selectedTradeCardId = null; selectedTradeVariantCode = null;
   albums = []; featuredCardIds = [];
   applyIdentity();
   el('available-sets-count').textContent = '0';
